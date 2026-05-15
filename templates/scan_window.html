@@ -831,6 +831,36 @@ function showResult(data) {
     const modelTxt  = data.model_used || 'AI Model';
     const displayName = data.predicted_class || 'Unknown';
     const warningText = data.result_warning || `AI confidence is low (${conf.toFixed(1)}%) - image may be unclear, too far, or the condition is ambiguous.`;
+    const detailsHtml = `
+        <div class="info-box full">
+            <div class="info-box-label"><i class="fas fa-eye"></i> Visible Signs</div>
+            <div class="info-box-text">${esc(data.visual_findings || 'No specific visual signs were reported.')}</div>
+        </div>
+        <div class="info-box full">
+            <div class="info-box-label"><i class="fas fa-file-medical"></i> About ${esc(displayName)}</div>
+            <div class="info-box-text">${esc(data.description || 'No information available.')}</div>
+        </div>
+        <div class="info-box">
+            <div class="info-box-label"><i class="fas fa-stethoscope"></i> Common Symptoms</div>
+            <div class="info-box-text">${esc(data.symptoms || 'Symptoms vary by person.')}</div>
+        </div>
+        <div class="info-box">
+            <div class="info-box-label"><i class="fas fa-virus"></i> Possible Cause</div>
+            <div class="info-box-text">${esc(data.cause || 'Unknown.')}</div>
+        </div>
+        <div class="info-box full">
+            <div class="info-box-label"><i class="fas fa-notes-medical"></i> Recommendations</div>
+            <div class="info-box-text">${esc(data.recommendations || 'Consult a dermatologist.')}</div>
+        </div>
+        <div class="info-box danger full">
+            <div class="info-box-label"><i class="fas fa-triangle-exclamation"></i> Precautions</div>
+            <div class="info-box-text">${esc(data.precautions || 'Use sun protection and monitor for changes.')}</div>
+        </div>
+        <div class="info-box danger full">
+            <div class="info-box-label"><i class="fas fa-user-doctor"></i> When to See a Doctor</div>
+            <div class="info-box-text">${esc(data.when_to_see_doctor || 'Seek medical care if symptoms worsen, spread, bleed, become painful, or do not improve.')}</div>
+        </div>
+    `;
 
     // Update topbar badge
     modelBadge.innerHTML = '<i class="fas fa-brain"></i> ' + esc(modelTxt);
@@ -913,14 +943,7 @@ function showResult(data) {
                     <strong>4. One condition at a time</strong> — isolate the specific area you want analyzed.
                 </div>
             </div>
-            <div class="info-box full">
-                <div class="info-box-label"><i class="fas fa-file-medical"></i> About "${esc(displayName)}" (closest uncertain match)</div>
-                <div class="info-box-text">${esc(data.description || 'No information available.')}</div>
-            </div>
-            <div class="info-box danger full">
-                <div class="info-box-label"><i class="fas fa-user-doctor"></i> What to do</div>
-                <div class="info-box-text">Because confidence is low, <strong>please do not rely on this result</strong>. Try retaking the photo with better lighting and closer distance, or consult a dermatologist for a proper examination.</div>
-            </div>
+            ${detailsHtml}
         `;
         document.getElementById('resultActions').innerHTML = `
             <button class="btn btn-primary btn-sm" onclick="reset()">
@@ -932,24 +955,7 @@ function showResult(data) {
         `;
     } else {
         const searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(displayName + ' skin condition treatment');
-        document.getElementById('infoGrid').innerHTML = `
-            <div class="info-box full">
-                <div class="info-box-label"><i class="fas fa-file-medical"></i> Description</div>
-                <div class="info-box-text">${esc(data.description || 'No information available.')}</div>
-            </div>
-            <div class="info-box">
-                <div class="info-box-label"><i class="fas fa-virus"></i> Cause</div>
-                <div class="info-box-text">${esc(data.cause || 'Unknown.')}</div>
-            </div>
-            <div class="info-box">
-                <div class="info-box-label"><i class="fas fa-notes-medical"></i> Recommendations</div>
-                <div class="info-box-text">${esc(data.recommendations || 'Consult a dermatologist.')}</div>
-            </div>
-            <div class="info-box danger full">
-                <div class="info-box-label"><i class="fas fa-triangle-exclamation"></i> Precautions</div>
-                <div class="info-box-text">${esc(data.precautions || 'Use sun protection and monitor for changes.')}</div>
-            </div>
-        `;
+        document.getElementById('infoGrid').innerHTML = detailsHtml;
         document.getElementById('resultActions').innerHTML = `
             <a href="${mapsUrl}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">
                 <i class="fas fa-map-location-dot"></i> Find Dermatologist

@@ -28,7 +28,7 @@ Traditional methods for diagnosing skin diseases are prone to inaccuracies and d
 ### Data Flow/Architecture
 1. **Dataset Collection:** Gather diverse skin image datasets.
 2. **Preprocessing:** Normalize and augment data for robustness.
-3. **Model Training:** Train a CNN model tailored for classification.
+3. **Model Training:** Train an image-analysis model for classification.
 4. **Evaluation:** Use metrics like accuracy, precision, and recall to assess performance.
 
 ---
@@ -57,7 +57,7 @@ Traditional methods for diagnosing skin diseases are prone to inaccuracies and d
 1. Clone the repository.
 2. Install the required dependencies listed in `requirements.txt`.
 3. Run the preprocessing script to prepare the dataset.
-4. Execute the training script to train the CNN model.
+4. Execute the training script to prepare the local fallback model.
 5. Use the prediction script to classify new images.
 
 ---
@@ -104,11 +104,11 @@ pip install -r requirements-train.txt
 
 ### Optional API-Based Analysis
 
-Set `NVIDIA_API_KEY` to use the external vision API as the primary analyzer. If it is not configured, the app falls back to the limited local CNN and marks the result as uncertain.
+Set `NVIDIA_API_KEY` to use the external vision API as the primary analyzer. If it is not configured, the app falls back to a limited local analyzer and marks the result as uncertain.
 
 ```
 NVIDIA_API_KEY=your_key_here
-NVIDIA_MODEL=nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
+NVIDIA_MODEL=nvidia/nemotron-nano-12b-v2-vl
 ```
 
 ---
@@ -152,7 +152,7 @@ Traditional methods for diagnosing skin diseases are prone to inaccuracies and d
 ### Data Flow/Architecture
 1. **Dataset Collection:** Gather diverse skin image datasets.
 2. **Preprocessing:** Normalize and augment data for robustness.
-3. **Model Training:** Train a CNN model tailored for classification.
+3. **Model Training:** Train an image-analysis model for classification.
 4. **Evaluation:** Use metrics like accuracy, precision, and recall to assess performance.
 
 ---
@@ -181,7 +181,7 @@ Traditional methods for diagnosing skin diseases are prone to inaccuracies and d
 1. Clone the repository.
 2. Install the required dependencies listed in `requirements.txt`.
 3. Run the preprocessing script to prepare the dataset.
-4. Execute the training script to train the CNN model.
+4. Execute the training script to prepare the local fallback model.
 5. Use the prediction script to classify new images.
 
 ---
