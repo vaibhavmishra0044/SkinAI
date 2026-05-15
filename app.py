@@ -13,9 +13,12 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-import tensorflow as tf
-from tensorflow.keras.models import load_model
-from tensorflow.keras.applications.efficientnet_v2 import preprocess_input
+
+try:
+    from ai_edge_litert.interpreter import Interpreter
+    _TFLITE_OK = True
+except ImportError:
+    _TFLITE_OK = False
 
 try:
     from transformers import pipeline as _hf_pipeline
@@ -47,8 +50,24 @@ app.jinja_env.globals['now'] = datetime.datetime.now
 app.jinja_env.filters['from_json'] = json.loads
 
 # ── Load CNN Model ────────────────────────────────────────────────────────────
-model_path = os.path.join(app.root_path, 'CNN1_trained_model.keras')
-cnn_model = load_model(model_path)
+tflite_model_path = os.path.join(app.root_path, 'CNN1_trained_model.tflite')
+keras_model_path = os.path.join(app.root_path, 'CNN1_trained_model.keras')
+cnn_model = None
+_tflite_interpreter = None
+_tflite_input_details = None
+_tflite_output_details = None
+CNN_RUNTIME = None
+
+if _TFLITE_OK and os.path.exists(tflite_model_path):
+    _tflite_interpreter = Interpreter(model_path=tflite_model_path)
+    _tflite_interpreter.allocate_tensors()
+    _tflite_input_details = _tflite_interpreter.get_input_details()
+    _tflite_output_details = _tflite_interpreter.get_output_details()
+    CNN_RUNTIME = "tflite"
+else:
+    from tensorflow.keras.models import load_model
+    cnn_model = load_model(keras_model_path)
+    CNN_RUNTIME = "keras"
 
 IMAGE_SIZE = (224, 224)
 
@@ -325,24 +344,13 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def preprocess_image(image_path):
-    """Preprocessing that exactly mirrors the training pipeline.
-    
-    Training uses:  tf.image.decode_jpeg → tf.image.resize (bilinear) → preprocess_input
-    Inference must: PIL.open (RGB) → tf.image.resize (bilinear) → preprocess_input
-    Using PIL LANCZOS was wrong — it produces slightly different pixel values.
-    """
+    """Resize to the model input and scale pixels to the EfficientNetV2 range."""
     img = Image.open(image_path).convert('RGB')
-    arr = np.array(img, dtype=np.float32)           # HxWx3, float32 [0,255]
-    # Resize using TF bilinear to exactly match tf.image.resize used in training
-    arr_tensor = tf.image.resize(arr, [IMAGE_SIZE[0], IMAGE_SIZE[1]])  # bilinear
-    arr = arr_tensor.numpy()                         # back to numpy
-    arr = preprocess_input(arr)                      # scales [0,255] → [-1, 1]
+    img = img.resize(IMAGE_SIZE, Image.Resampling.BILINEAR)
+    arr = np.asarray(img, dtype=np.float32)
+    arr = (arr / 127.5) - 1.0
     return np.expand_dims(arr, axis=0)               # (1, H, W, 3)
 # DEF ALLOWED_FILE(FILE NAME ) DEIGN NURAL NETWORK AND HUMAIN BRAIN NP ZERO (1,IMAGE SIZE {00=1173,3445,16555,8867,})
-# Model warmup — prevents slow first prediction
-_dummy = np.zeros((1, IMAGE_SIZE[0], IMAGE_SIZE[1], 3), dtype=np.float32)
-cnn_model.predict(_dummy, verbose=0)
-del _dummy
 
 # ── HuggingFace Local Pipeline (23-class DermNet model) ───────────────────────
 # Anwarkh1 covers ringworm/tinea, eczema, psoriasis, acne + 19 other conditions
@@ -382,7 +390,17 @@ def run_hf_inference(image_path):
     return [{'class_key': k, 'confidence': round(v * 100, 1)} for k, v in sorted_items[:3]]
 
 def run_cnn_inference(image_path):
-    preds = cnn_model.predict(preprocess_image(image_path), verbose=0)[0]
+    input_data = preprocess_image(image_path)
+    if CNN_RUNTIME == "tflite":
+        input_detail = _tflite_input_details[0]
+        output_detail = _tflite_output_details[0]
+        if input_data.dtype != input_detail['dtype']:
+            input_data = input_data.astype(input_detail['dtype'])
+        _tflite_interpreter.set_tensor(input_detail['index'], input_data)
+        _tflite_interpreter.invoke()
+        preds = _tflite_interpreter.get_tensor(output_detail['index'])[0]
+    else:
+        preds = cnn_model.predict(input_data, verbose=0)[0]
     preds = np.asarray(preds, dtype=np.float32)
 
     # Accept either softmax probabilities or raw logits from the model.

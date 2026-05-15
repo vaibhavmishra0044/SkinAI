@@ -89,11 +89,17 @@ python train.py
 
 Outputs:
 - `CNN1_trained_model.keras` (best model)
+- `CNN1_trained_model.tflite` (deployment-friendly inference model)
 - `class_names.json` (label order used at inference time)
 
 After training, run the app as usual:
 ```
 python app.py
+```
+
+For local retraining, install the heavier training dependencies:
+```
+pip install -r requirements-train.txt
 ```
 
 ---
