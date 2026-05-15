@@ -510,6 +510,15 @@ def _confidence(value):
         num *= 100
     return round(max(0.0, min(100.0, num)), 1)
 
+def _is_placeholder_condition(name, key):
+    text = f"{name or ''} {key or ''}".strip().lower()
+    return (
+        "most likely skin condition" in text
+        or "possible condition" in text
+        or "unknown / unclear" in text
+        or key in {"short_key", "unknown_lesion"}
+    )
+
 def run_nvidia_inference(image_path):
     if not USE_NVIDIA_API:
         raise RuntimeError("NVIDIA_API_KEY is not configured")
@@ -549,6 +558,7 @@ Rules:
 - If the photo is blurry, far away, covered, or ambiguous, keep confidence low and explain what image quality issue limits the analysis.
 - Pay close attention to lesion shape and location. If the lesion is annular/ring-shaped with a scaly raised border and central clearing, strongly consider tinea corporis / ringworm rather than scalp/face conditions.
 - Do not diagnose scalp or face conditions unless the scalp or face is actually visible in the uploaded image.
+- Do not copy placeholder text from the JSON schema. Always replace placeholders with actual condition names, or use "Unknown / unclear" only when genuinely uncertain.
 - Include clinically useful information, but state safe next steps. This is visual screening support, not a final diagnosis.
 """.strip()
 
@@ -589,9 +599,8 @@ Rules:
     confidence = _confidence(analysis.get("confidence"))
 
     if not is_skin or not lesion_visible:
-        key = "unknown_normal"
-        condition_name = "No Clear Skin Lesion Detected"
-        confidence = 0.0
+        reason = analysis.get("visual_findings") or "The image was not a usable close-up skin-condition photo."
+        return _invalid_upload_result(reason)
 
     top3 = []
     for item in analysis.get("top3") or []:
@@ -603,13 +612,23 @@ Rules:
             "confidence": _confidence(item.get("confidence")),
         })
 
+    primary_is_placeholder = _is_placeholder_condition(condition_name, key)
+    specific_top3 = [item for item in top3 if not _is_placeholder_condition(item.get("class_name"), item.get("class_key"))]
+    if specific_top3:
+        top3 = specific_top3
+
     if not top3:
         top3 = [{"class_key": key, "class_name": condition_name, "confidence": round(confidence, 1)}]
-    elif top3[0]["class_key"] != key:
+    elif not primary_is_placeholder and top3[0]["class_key"] != key:
         top3.insert(0, {"class_key": key, "class_name": condition_name, "confidence": round(confidence, 1)})
-    else:
+    elif not primary_is_placeholder:
         top3[0]["class_name"] = condition_name
         top3[0]["confidence"] = round(confidence, 1)
+    top3 = sorted(top3, key=lambda item: item.get("confidence", 0), reverse=True)
+    if primary_is_placeholder and top3:
+        key = top3[0]["class_key"]
+        condition_name = top3[0]["class_name"]
+        confidence = top3[0]["confidence"]
     top3 = top3[:3]
 
     info = {
@@ -623,21 +642,8 @@ Rules:
         "when_to_see_doctor": analysis.get("when_to_see_doctor") or "Seek medical care if symptoms worsen, spread, bleed, become painful, or do not improve.",
         "icd": analysis.get("icd") or "N/A",
     }
-    if key == "unknown_normal" and (not is_skin or not lesion_visible):
-        info.update({
-            "visual_findings": "No clear close-up skin lesion was visible.",
-            "description": "The uploaded image does not appear to be a clear close-up skin lesion image, so a disease prediction was not made.",
-            "symptoms": "Not applicable from this image.",
-            "cause": "The image may be unrelated to skin disease, too far away, unclear, or outside the supported input type.",
-            "recommendations": "Upload a clear close-up photo of the affected skin area, or consult a dermatologist.",
-            "risk_level": "Unknown",
-            "precautions": "Do not treat this as a medical diagnosis. Retake the image with good lighting and focus.",
-            "when_to_see_doctor": "Consult a dermatologist if you have persistent symptoms, pain, bleeding, fast growth, or spreading rash.",
-            "icd": "N/A",
-        })
-
     top3[0]["info"] = info
-    top3[0]["invalid_image"] = not is_skin or not lesion_visible
+    top3[0]["invalid_image"] = False
     return top3
 
 # ── Database Models ───────────────────────────────────────────────────────────
