@@ -102,6 +102,15 @@ For local retraining, install the heavier training dependencies:
 pip install -r requirements-train.txt
 ```
 
+### Optional API-Based Analysis
+
+Set `NVIDIA_API_KEY` to use the external vision API as the primary analyzer. If it is not configured, the app falls back to the limited local CNN and marks the result as uncertain.
+
+```
+NVIDIA_API_KEY=your_key_here
+NVIDIA_MODEL=nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
+```
+
 ---
 
 ## Prerequisites

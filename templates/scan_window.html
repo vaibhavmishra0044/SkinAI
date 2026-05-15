@@ -269,6 +269,15 @@
         .conf-bar-bg { height: 10px; background: var(--gray-100); border-radius: 5px; overflow: hidden; }
         .conf-bar-fill { height: 100%; border-radius: 5px; transition: width 1.2s cubic-bezier(.4,0,.2,1); }
 
+        .uncertain-banner {
+            margin: 0 0 16px;
+            padding: 14px 18px;
+            background: #fef3c7; border: 2px solid #f59e0b; border-radius: 10px;
+            font-size: 13px; color: #92400e;
+            display: flex; align-items: flex-start; gap: 12px;
+        }
+        .uncertain-banner i { font-size: 22px; color: #d97706; margin-top: 2px; flex-shrink: 0; }
+
         .low-conf-alert {
             margin: 0 24px 12px;
             padding: 11px 14px;
@@ -653,7 +662,7 @@
             <h3>Ready to Analyze</h3>
             <p>Upload a skin image on the left and click "Analyze with AI" to get an instant AI-powered skin disease assessment.</p>
             <div class="placeholder-badge">
-                <i class="fas fa-shield-halved"></i> 7 Detectable Skin Conditions
+                <i class="fas fa-shield-halved"></i> AI Skin Analysis
             </div>
         </div>
 
@@ -811,42 +820,61 @@ function confColor(c) {
 }
 
 function showResult(data) {
-    const conf  = typeof data.confidence === 'number' ? data.confidence : 0;
-    const risk  = data.risk_level || 'Unknown';
-    const icd   = data.icd || 'N/A';
-    const rs    = riskStyle(risk);
-    const [cc]  = confColor(conf);
-    const top3  = data.top3 || [];
-    const searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent((data.predicted_class || '') + ' skin condition treatment');
+    const conf      = typeof data.confidence === 'number' ? data.confidence : 0;
+    const lowConf   = data.low_confidence === true || conf < 60;
+    const risk      = data.risk_level || 'Unknown';
+    const icd       = data.icd || 'N/A';
+    const rs        = riskStyle(risk);
+    const [cc]      = confColor(conf);
+    const top3      = data.top3 || [];
     const mapsUrl   = 'https://www.google.com/maps/search/dermatologist+near+me';
     const modelTxt  = data.model_used || 'AI Model';
+    const displayName = data.predicted_class || 'Unknown';
+    const warningText = data.result_warning || `AI confidence is low (${conf.toFixed(1)}%) - image may be unclear, too far, or the condition is ambiguous.`;
 
     // Update topbar badge
     modelBadge.innerHTML = '<i class="fas fa-brain"></i> ' + esc(modelTxt);
 
-    // Header
-    document.getElementById('resultHeader').innerHTML = `
-        <div class="result-badge">
-            <span class="risk-chip" style="background:${rs.bg};color:${rs.color};">
-                <i class="fas fa-shield-virus"></i> ${esc(risk)} Risk
-            </span>
-            <span class="conf-chip">
-                <i class="fas fa-percent"></i> ${conf.toFixed(1)}% Confidence
-            </span>
-            <span class="icd-chip">ICD: ${esc(icd)}</span>
-            <span class="model-used-chip"><i class="fas fa-microchip"></i> ${esc(modelTxt)}</span>
-        </div>
-        <div class="result-name">${esc(data.predicted_class || 'Unknown')}</div>
-        <div class="conf-bar-wrap">
-            <div class="conf-bar-label"><span>Model Confidence</span><span>${conf.toFixed(1)}%</span></div>
-            <div class="conf-bar-bg">
-                <div class="conf-bar-fill" id="confBarFill" style="width:0%;background:${cc};"></div>
+    if (lowConf) {
+        // ── UNCERTAIN RESULT HEADER ──────────────────────────────────────────
+        document.getElementById('resultHeader').innerHTML = `
+            <div class="uncertain-banner">
+                <i class="fas fa-circle-question"></i>
+                <div>
+                    <div style="font-weight:700;font-size:15px;">Results Unclear</div>
+                    <div style="font-size:13px;opacity:.9;">${esc(warningText)}</div>
+                </div>
             </div>
-        </div>
-    `;
-
-    // Low confidence alert
-    document.getElementById('lowConfAlert').style.display = conf < 50 ? 'flex' : 'none';
+            <div class="result-name" style="font-size:18px;color:var(--gray-500);">
+                <span style="font-size:13px;font-weight:500;color:var(--gray-400);display:block;margin-bottom:4px;">Closest match (uncertain):</span>
+                ${esc(displayName)}
+            </div>
+            <div class="conf-bar-wrap">
+                <div class="conf-bar-label"><span>Model Confidence</span><span style="color:#ef4444;">${conf.toFixed(1)}%</span></div>
+                <div class="conf-bar-bg"><div class="conf-bar-fill" id="confBarFill" style="width:0%;background:#ef4444;"></div></div>
+            </div>
+        `;
+        document.getElementById('lowConfAlert').style.display = 'none';
+    } else {
+        // ── CONFIDENT RESULT HEADER ──────────────────────────────────────────
+        const searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(displayName + ' skin condition treatment');
+        document.getElementById('resultHeader').innerHTML = `
+            <div class="result-badge">
+                <span class="risk-chip" style="background:${rs.bg};color:${rs.color};">
+                    <i class="fas fa-shield-virus"></i> ${esc(risk)} Risk
+                </span>
+                <span class="conf-chip"><i class="fas fa-percent"></i> ${conf.toFixed(1)}% Confidence</span>
+                <span class="icd-chip">ICD: ${esc(icd)}</span>
+                <span class="model-used-chip"><i class="fas fa-microchip"></i> ${esc(modelTxt)}</span>
+            </div>
+            <div class="result-name">${esc(displayName)}</div>
+            <div class="conf-bar-wrap">
+                <div class="conf-bar-label"><span>Model Confidence</span><span>${conf.toFixed(1)}%</span></div>
+                <div class="conf-bar-bg"><div class="conf-bar-fill" id="confBarFill" style="width:0%;background:${cc};"></div></div>
+            </div>
+        `;
+        document.getElementById('lowConfAlert').style.display = 'none';
+    }
 
     // Chart
     const labels = top3.map(p => p.class_name);
@@ -874,37 +902,66 @@ function showResult(data) {
     });
 
     // Info grid
-    document.getElementById('infoGrid').innerHTML = `
-        <div class="info-box full">
-            <div class="info-box-label"><i class="fas fa-file-medical"></i> Description</div>
-            <div class="info-box-text">${esc(data.description || 'No information available.')}</div>
-        </div>
-        <div class="info-box">
-            <div class="info-box-label"><i class="fas fa-virus"></i> Cause</div>
-            <div class="info-box-text">${esc(data.cause || 'Unknown.')}</div>
-        </div>
-        <div class="info-box">
-            <div class="info-box-label"><i class="fas fa-notes-medical"></i> Recommendations</div>
-            <div class="info-box-text">${esc(data.recommendations || 'Consult a dermatologist.')}</div>
-        </div>
-        <div class="info-box danger full">
-            <div class="info-box-label"><i class="fas fa-triangle-exclamation"></i> Precautions</div>
-            <div class="info-box-text">${esc(data.precautions || 'Use sun protection and monitor for changes.')}</div>
-        </div>
-    `;
-
-    // Actions
-    document.getElementById('resultActions').innerHTML = `
-        <a href="${mapsUrl}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">
-            <i class="fas fa-map-location-dot"></i> Find Dermatologist
-        </a>
-        <a href="${searchUrl}" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
-            <i class="fas fa-magnifying-glass"></i> Research Online
-        </a>
-        <button class="btn btn-ghost btn-sm" onclick="reset()">
-            <i class="fas fa-rotate-left"></i> Analyze Another
-        </button>
-    `;
+    if (lowConf) {
+        document.getElementById('infoGrid').innerHTML = `
+            <div class="info-box full" style="background:#fef3c7;border-color:#f59e0b;">
+                <div class="info-box-label" style="color:#d97706;"><i class="fas fa-camera"></i> How to get better results</div>
+                <div class="info-box-text">
+                    <strong>1. Get closer</strong> — fill the frame with the affected skin area.<br>
+                    <strong>2. Use good lighting</strong> — natural daylight or a bright lamp, no flash.<br>
+                    <strong>3. Keep steady</strong> — avoid blur by tapping to focus before capturing.<br>
+                    <strong>4. One condition at a time</strong> — isolate the specific area you want analyzed.
+                </div>
+            </div>
+            <div class="info-box full">
+                <div class="info-box-label"><i class="fas fa-file-medical"></i> About "${esc(displayName)}" (closest uncertain match)</div>
+                <div class="info-box-text">${esc(data.description || 'No information available.')}</div>
+            </div>
+            <div class="info-box danger full">
+                <div class="info-box-label"><i class="fas fa-user-doctor"></i> What to do</div>
+                <div class="info-box-text">Because confidence is low, <strong>please do not rely on this result</strong>. Try retaking the photo with better lighting and closer distance, or consult a dermatologist for a proper examination.</div>
+            </div>
+        `;
+        document.getElementById('resultActions').innerHTML = `
+            <button class="btn btn-primary btn-sm" onclick="reset()">
+                <i class="fas fa-camera"></i> Try Again (Better Photo)
+            </button>
+            <a href="${mapsUrl}" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
+                <i class="fas fa-map-location-dot"></i> Find Dermatologist
+            </a>
+        `;
+    } else {
+        const searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(displayName + ' skin condition treatment');
+        document.getElementById('infoGrid').innerHTML = `
+            <div class="info-box full">
+                <div class="info-box-label"><i class="fas fa-file-medical"></i> Description</div>
+                <div class="info-box-text">${esc(data.description || 'No information available.')}</div>
+            </div>
+            <div class="info-box">
+                <div class="info-box-label"><i class="fas fa-virus"></i> Cause</div>
+                <div class="info-box-text">${esc(data.cause || 'Unknown.')}</div>
+            </div>
+            <div class="info-box">
+                <div class="info-box-label"><i class="fas fa-notes-medical"></i> Recommendations</div>
+                <div class="info-box-text">${esc(data.recommendations || 'Consult a dermatologist.')}</div>
+            </div>
+            <div class="info-box danger full">
+                <div class="info-box-label"><i class="fas fa-triangle-exclamation"></i> Precautions</div>
+                <div class="info-box-text">${esc(data.precautions || 'Use sun protection and monitor for changes.')}</div>
+            </div>
+        `;
+        document.getElementById('resultActions').innerHTML = `
+            <a href="${mapsUrl}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">
+                <i class="fas fa-map-location-dot"></i> Find Dermatologist
+            </a>
+            <a href="${searchUrl}" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
+                <i class="fas fa-magnifying-glass"></i> Research Online
+            </a>
+            <button class="btn btn-ghost btn-sm" onclick="reset()">
+                <i class="fas fa-rotate-left"></i> Analyze Another
+            </button>
+        `;
+    }
 
     placeholder.style.display = 'none';
     resultWrap.classList.add('show');

@@ -1,4 +1,4 @@
-import os, json, secrets, tempfile, datetime
+import os, json, secrets, tempfile, datetime, base64, io, re
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 os.environ.setdefault('OMP_NUM_THREADS', '1')
 os.environ.setdefault('OPENBLAS_NUM_THREADS', '1')
@@ -8,6 +8,7 @@ os.environ.setdefault('TRANSFORMERS_CACHE', r'E:\hf_cache\hub')
 import numpy as np
 from functools import wraps
 from PIL import Image
+import requests
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -108,6 +109,19 @@ DISPLAY_NAMES = {
     "melanocytic_nevi":              "Melanocytic Nevi / Moles",
     "vascular_lesions":              "Vascular Lesions",
 }
+
+NVIDIA_API_KEY = os.getenv('NVIDIA_API_KEY', '').strip()
+NVIDIA_API_URL = os.getenv('NVIDIA_API_URL', 'https://integrate.api.nvidia.com/v1/chat/completions')
+NVIDIA_MODEL = os.getenv('NVIDIA_MODEL', 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning')
+USE_NVIDIA_API = bool(NVIDIA_API_KEY)
+
+API_SUPPORTED_KEYS = [
+    "acne", "actinic_keratosis", "benign_tumors", "bullous", "candidiasis",
+    "drug_eruption", "eczema", "infestations_bites", "lichen", "lupus",
+    "moles", "psoriasis", "rosacea", "seborrheic_keratoses", "skin_cancer",
+    "sun_damage", "tinea_ringworm", "unknown_normal", "vascular_tumors",
+    "vasculitis", "vitiligo", "warts",
+]
 
 LESION_INFO = {
     # ── LaurianeMD 22-class ViT model ────────────────────────────────────────
@@ -417,6 +431,160 @@ def run_cnn_inference(image_path):
         for i in top_indices
     ]
 
+def _image_data_url_for_api(image_path):
+    img = Image.open(image_path).convert('RGB')
+    img.thumbnail((768, 768), Image.Resampling.LANCZOS)
+    buf = io.BytesIO()
+    img.save(buf, format='JPEG', quality=82, optimize=True)
+    b64 = base64.b64encode(buf.getvalue()).decode('ascii')
+    return f"data:image/jpeg;base64,{b64}"
+
+def _json_from_model_text(text):
+    cleaned = re.sub(r"^```(?:json)?|```$", "", text.strip(), flags=re.IGNORECASE | re.MULTILINE).strip()
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        match = re.search(r"\{.*\}", cleaned, flags=re.DOTALL)
+        if not match:
+            raise
+        return json.loads(match.group(0))
+
+def _normalize_api_key(value):
+    if not value:
+        return "unknown_normal"
+    key = str(value).strip().lower()
+    key = key.replace('-', '_').replace('/', '_').replace(' ', '_')
+    aliases = {
+        "normal": "unknown_normal",
+        "normal_skin": "unknown_normal",
+        "not_skin": "unknown_normal",
+        "invalid_image": "unknown_normal",
+        "ringworm": "tinea_ringworm",
+        "tinea": "tinea_ringworm",
+        "fungal_infection": "tinea_ringworm",
+        "mole": "moles",
+        "melanocytic_nevi": "moles",
+        "nevus": "moles",
+        "skin_carcinoma": "skin_cancer",
+        "basal_cell_carcinoma": "skin_cancer",
+        "melanoma": "skin_cancer",
+        "benign_keratosis_like_lesions": "seborrheic_keratoses",
+        "actinic_keratoses": "actinic_keratosis",
+        "vascular_lesions": "vascular_tumors",
+    }
+    key = aliases.get(key, key)
+    return key if key in API_SUPPORTED_KEYS else "unknown_normal"
+
+def run_nvidia_inference(image_path):
+    if not USE_NVIDIA_API:
+        raise RuntimeError("NVIDIA_API_KEY is not configured")
+
+    class_options = ", ".join(API_SUPPORTED_KEYS)
+    data_url = _image_data_url_for_api(image_path)
+    prompt = f"""
+Analyze this uploaded image for a visible skin condition. Return JSON only.
+
+Use this exact schema:
+{{
+  "is_skin_image": true,
+  "lesion_visible": true,
+  "predicted_class_key": "one key from the allowed list",
+  "confidence": 0,
+  "top3": [
+    {{"class_key": "one key from the allowed list", "confidence": 0}},
+    {{"class_key": "one key from the allowed list", "confidence": 0}},
+    {{"class_key": "one key from the allowed list", "confidence": 0}}
+  ],
+  "description": "brief visual explanation",
+  "cause": "likely causes or unknown",
+  "recommendations": "safe next steps",
+  "precautions": "red flags and safety advice",
+  "risk_level": "Low, Moderate, High, Very High, or Unknown",
+  "icd": "ICD code or N/A"
+}}
+
+Allowed class keys: {class_options}
+
+Rules:
+- If the image is not a close-up skin/lesion image, set is_skin_image=false, lesion_visible=false, predicted_class_key="unknown_normal", confidence=0.
+- Do not invent certainty. Use low confidence when the photo is blurry, far away, covered, or ambiguous.
+- This is a visual screening aid, not a final diagnosis.
+
+Image:
+<img src="{data_url}" />
+""".strip()
+
+    payload = {
+        "model": NVIDIA_MODEL,
+        "messages": [
+            {
+                "role": "system",
+                "content": "You are a cautious medical image screening assistant. Return strict JSON only.",
+            },
+            {"role": "user", "content": prompt},
+        ],
+        "temperature": 0,
+        "max_tokens": 900,
+    }
+    headers = {
+        "Authorization": f"Bearer {NVIDIA_API_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+    resp = requests.post(NVIDIA_API_URL, headers=headers, json=payload, timeout=45)
+    if resp.status_code >= 400:
+        raise RuntimeError(f"NVIDIA API returned {resp.status_code}: {resp.text[:300]}")
+    data = resp.json()
+    content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+    analysis = _json_from_model_text(content)
+
+    is_skin = bool(analysis.get("is_skin_image"))
+    lesion_visible = bool(analysis.get("lesion_visible"))
+    key = _normalize_api_key(analysis.get("predicted_class_key"))
+    confidence = float(analysis.get("confidence") or 0)
+    confidence = max(0.0, min(100.0, confidence))
+
+    if not is_skin or not lesion_visible:
+        key = "unknown_normal"
+        confidence = 0.0
+
+    top3 = []
+    for item in analysis.get("top3") or []:
+        item_key = _normalize_api_key(item.get("class_key"))
+        item_conf = float(item.get("confidence") or 0)
+        top3.append({
+            "class_key": item_key,
+            "confidence": round(max(0.0, min(100.0, item_conf)), 1),
+        })
+
+    if not top3:
+        top3 = [{"class_key": key, "confidence": round(confidence, 1)}]
+    elif top3[0]["class_key"] != key:
+        top3.insert(0, {"class_key": key, "confidence": round(confidence, 1)})
+    top3 = top3[:3]
+
+    info = {
+        "description": analysis.get("description") or "AI analysis could not provide a reliable description.",
+        "cause": analysis.get("cause") or "Unknown.",
+        "recommendations": analysis.get("recommendations") or "Consult a qualified dermatologist for an in-person assessment.",
+        "risk_level": analysis.get("risk_level") or "Unknown",
+        "precautions": analysis.get("precautions") or "Do not rely only on AI for medical diagnosis.",
+        "icd": analysis.get("icd") or "N/A",
+    }
+    if key == "unknown_normal" and (not is_skin or not lesion_visible):
+        info.update({
+            "description": "The uploaded image does not appear to be a clear close-up skin lesion image, so a disease prediction was not made.",
+            "cause": "The image may be unrelated to skin disease, too far away, unclear, or outside the supported input type.",
+            "recommendations": "Upload a clear close-up photo of the affected skin area, or consult a dermatologist.",
+            "risk_level": "Unknown",
+            "precautions": "Do not treat this as a medical diagnosis. Retake the image with good lighting and focus.",
+            "icd": "N/A",
+        })
+
+    top3[0]["info"] = info
+    top3[0]["invalid_image"] = not is_skin or not lesion_visible
+    return top3
+
 # ── Database Models ───────────────────────────────────────────────────────────
 class User(db.Model, UserMixin):
     id         = db.Column(db.Integer, primary_key=True)
@@ -561,15 +729,27 @@ def predict():
 
     ext = os.path.splitext(secure_filename(file.filename))[1].lower() or '.jpg'
     tmp = tempfile.NamedTemporaryFile(suffix=ext, delete=False)
+    fallback_warning = False
+    api_error = None
     try:
         file.save(tmp.name)
         tmp.close()
-        if _hf_clf is not None:
+        if USE_NVIDIA_API:
+            try:
+                top3_raw = run_nvidia_inference(tmp.name)
+                model_used = "Advanced Vision API"
+            except Exception as e:
+                api_error = str(e)
+                top3_raw = run_cnn_inference(tmp.name)
+                model_used = "CNN fallback (API unavailable)"
+                fallback_warning = True
+        elif _hf_clf is not None:
             top3_raw = run_hf_inference(tmp.name)
             model_used = "ViT 22-class (HuggingFace)"
         else:
             top3_raw = run_cnn_inference(tmp.name)
-            model_used = "CNN 7-class (HAM10000)"
+            model_used = "CNN fallback (limited)"
+            fallback_warning = True
     except Exception as e:
         return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
     finally:
@@ -588,9 +768,10 @@ def predict():
         })
 
     primary      = top3[0]
+    primary_extra = top3_raw[0] if top3_raw else {}
     predicted_key = primary['class_key']
     info_key = INFO_ALIASES.get(predicted_key, predicted_key)
-    info = LESION_INFO.get(info_key, {
+    info = primary_extra.get('info') or LESION_INFO.get(info_key, {
         'description':     'Information not available.',
         'cause':           'Unknown.',
         'recommendations': 'Consult a dermatologist.',
@@ -613,10 +794,25 @@ def predict():
         db.session.add(pred_record)
         db.session.commit()
 
+    invalid_image = bool(primary_extra.get('invalid_image'))
+    low_confidence = primary['confidence'] < 60.0 or invalid_image or fallback_warning
+    if invalid_image:
+        result_warning = "This does not look like a clear close-up skin lesion image, so no reliable disease prediction was made."
+    elif fallback_warning:
+        result_warning = "Using limited CNN fallback because the external vision API is not configured or unavailable. Treat this only as an uncertain closest match."
+    elif primary['confidence'] < 60.0:
+        result_warning = "AI confidence is low; the image may be unclear, too far away, or medically ambiguous."
+    else:
+        result_warning = ""
+
     return jsonify({
         'predicted_class':     primary['class_name'],
         'predicted_class_key': predicted_key,
         'confidence':          primary['confidence'],
+        'low_confidence':      low_confidence,
+        'invalid_image':       invalid_image,
+        'fallback_warning':    fallback_warning,
+        'result_warning':      result_warning,
         'top3':                top3,
         'description':         info['description'],
         'cause':               info['cause'],
@@ -627,6 +823,7 @@ def predict():
         'risk_color':          risk_info[1],
         'risk_bg':             risk_info[2],
         'model_used':          model_used,
+        'api_error':           api_error if app.debug else None,
     })
 
 @app.route('/feedback', methods=['POST'])
