@@ -447,6 +447,14 @@ def _invalid_upload_result(reason):
         "description": "A disease prediction was not made because the uploaded image is not suitable for skin-condition analysis.",
         "symptoms": "Not applicable from this image.",
         "cause": "The image may be too wide, too small, unclear, or not focused on the affected skin area.",
+        "differential_diagnoses": "Not applicable from this image.",
+        "common_locations": "Not applicable from this image.",
+        "contagiousness": "Cannot be determined from this image.",
+        "care_options": "No treatment guidance can be given from this image.",
+        "prevention": "Upload a clearer, closer image for more useful analysis.",
+        "what_to_avoid": "Avoid treating yourself based only on this image result.",
+        "possible_complications": "Cannot be assessed from this image.",
+        "how_doctors_confirm": "A clinician may need an in-person exam and, when appropriate, dermoscopy, scraping, culture, blood tests, or biopsy.",
         "recommendations": "Upload a close-up photo where the rash, spot, patch, or lesion fills most of the frame.",
         "risk_level": "Unknown",
         "precautions": "Do not use this result for treatment decisions. Retake the image or consult a dermatologist.",
@@ -543,6 +551,14 @@ Use this exact schema:
   "description": "plain-English condition summary",
   "symptoms": "common symptoms",
   "cause": "likely causes or unknown",
+  "differential_diagnoses": "other conditions that can look similar",
+  "common_locations": "body areas where this condition commonly appears",
+  "contagiousness": "whether it is usually contagious, not contagious, or unknown",
+  "care_options": "typical home care, over-the-counter options, and professional treatment options",
+  "prevention": "prevention and recurrence-reduction advice",
+  "what_to_avoid": "things that may worsen the condition or delay care",
+  "possible_complications": "possible complications or warning signs",
+  "how_doctors_confirm": "how clinicians usually confirm this condition",
   "recommendations": "safe next steps and common management options",
   "precautions": "red flags and safety advice",
   "when_to_see_doctor": "when urgent or specialist care is needed",
@@ -560,6 +576,8 @@ Rules:
 - If the photo is blurry, far away, covered, or ambiguous, keep confidence low and explain what image quality issue limits the analysis.
 - Pay close attention to lesion shape and location. If the lesion is annular/ring-shaped with a scaly raised border and central clearing, strongly consider tinea corporis / ringworm rather than scalp/face conditions.
 - Do not diagnose scalp or face conditions unless the scalp or face is actually visible in the uploaded image.
+- Give complete but concise medically useful information. Mention uncertainty, similar-looking conditions, and clinician confirmation tests when relevant.
+- Do not recommend prescription-only medication as something the user should self-start. Present prescription treatments only as doctor-managed options.
 - Do not copy placeholder text from the JSON schema. Always replace placeholders with actual condition names, or use "Unknown / unclear" only when genuinely uncertain.
 - Include clinically useful information, but state safe next steps. This is visual screening support, not a final diagnosis.
 """.strip()
@@ -580,7 +598,7 @@ Rules:
             },
         ],
         "temperature": 0,
-        "max_tokens": 1200,
+        "max_tokens": 2000,
     }
     headers = {
         "Authorization": f"Bearer {NVIDIA_API_KEY}",
@@ -638,6 +656,14 @@ Rules:
         "description": analysis.get("description") or "AI analysis could not provide a reliable description.",
         "symptoms": analysis.get("symptoms") or "Symptoms vary. Confirm with a qualified clinician.",
         "cause": analysis.get("cause") or "Unknown.",
+        "differential_diagnoses": analysis.get("differential_diagnoses") or "Several skin conditions can look similar from a photo. A clinician can confirm the diagnosis.",
+        "common_locations": analysis.get("common_locations") or "Can vary by condition and person.",
+        "contagiousness": analysis.get("contagiousness") or "Unknown from this image alone.",
+        "care_options": analysis.get("care_options") or "Use gentle skin care and consult a qualified clinician before starting treatment.",
+        "prevention": analysis.get("prevention") or "Keep skin clean, avoid known triggers, and use sun protection when appropriate.",
+        "what_to_avoid": analysis.get("what_to_avoid") or "Avoid scratching, picking, harsh products, and self-medicating with prescription treatments.",
+        "possible_complications": analysis.get("possible_complications") or "Seek care if the area spreads, becomes painful, bleeds, drains pus, or changes quickly.",
+        "how_doctors_confirm": analysis.get("how_doctors_confirm") or "Doctors may confirm with history, physical exam, dermoscopy, scraping/culture, blood tests, or biopsy depending on the suspected condition.",
         "recommendations": analysis.get("recommendations") or "Consult a qualified dermatologist for an in-person assessment.",
         "risk_level": analysis.get("risk_level") or "Unknown",
         "precautions": analysis.get("precautions") or "Do not rely only on AI for medical diagnosis.",
@@ -885,6 +911,14 @@ def predict():
         'description':         info['description'],
         'symptoms':            info.get('symptoms', 'Symptoms vary by person. Confirm with a qualified clinician.'),
         'cause':               info['cause'],
+        'differential_diagnoses': info.get('differential_diagnoses', 'Several skin conditions can look similar from a photo. A clinician can confirm the diagnosis.'),
+        'common_locations':    info.get('common_locations', 'Can vary by condition and person.'),
+        'contagiousness':      info.get('contagiousness', 'Unknown from this image alone.'),
+        'care_options':        info.get('care_options', 'Use gentle skin care and consult a qualified clinician before starting treatment.'),
+        'prevention':          info.get('prevention', 'Keep skin clean, avoid known triggers, and use sun protection when appropriate.'),
+        'what_to_avoid':       info.get('what_to_avoid', 'Avoid scratching, picking, harsh products, and self-medicating with prescription treatments.'),
+        'possible_complications': info.get('possible_complications', 'Seek care if the area spreads, becomes painful, bleeds, drains pus, or changes quickly.'),
+        'how_doctors_confirm': info.get('how_doctors_confirm', 'Doctors may confirm with history, physical exam, dermoscopy, scraping/culture, blood tests, or biopsy depending on the suspected condition.'),
         'recommendations':     info['recommendations'],
         'risk_level':          info['risk_level'],
         'precautions':         info['precautions'],

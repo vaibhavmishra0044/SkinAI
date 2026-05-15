@@ -524,6 +524,8 @@ function showResult(data) {
     const top3  = data.top3 || [];
     const searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent((data.predicted_class||'') + ' skin condition treatment');
     const mapsUrl   = 'https://www.google.com/maps/search/dermatologist+near+me';
+    const dermnetUrl = 'https://www.google.com/search?q=' + encodeURIComponent('site:dermnetnz.org ' + (data.predicted_class || 'skin condition'));
+    const aadUrl = 'https://www.google.com/search?q=' + encodeURIComponent('site:aad.org ' + (data.predicted_class || 'skin condition'));
 
     /* Header */
     document.getElementById('resultHeader').innerHTML = `
@@ -579,20 +581,60 @@ function showResult(data) {
     /* Info Grid */
     document.getElementById('infoGrid').innerHTML = `
         <div class="info-box full">
-            <div class="info-box-label"><i class="fas fa-file-medical"></i> Description</div>
+            <div class="info-box-label"><i class="fas fa-eye"></i> Visible Signs</div>
+            <div class="info-box-text">${esc(data.visual_findings || 'No specific visual signs were reported.')}</div>
+        </div>
+        <div class="info-box full">
+            <div class="info-box-label"><i class="fas fa-file-medical"></i> About This Condition</div>
             <div class="info-box-text">${esc(data.description || 'No information available.')}</div>
+        </div>
+        <div class="info-box">
+            <div class="info-box-label"><i class="fas fa-stethoscope"></i> Common Symptoms</div>
+            <div class="info-box-text">${esc(data.symptoms || 'Symptoms vary by person.')}</div>
         </div>
         <div class="info-box">
             <div class="info-box-label"><i class="fas fa-virus"></i> Cause</div>
             <div class="info-box-text">${esc(data.cause || 'Unknown.')}</div>
         </div>
+        <div class="info-box full">
+            <div class="info-box-label"><i class="fas fa-list-check"></i> Similar Conditions to Consider</div>
+            <div class="info-box-text">${esc(data.differential_diagnoses || 'Several skin conditions can look similar from a photo. A clinician can confirm the diagnosis.')}</div>
+        </div>
         <div class="info-box">
-            <div class="info-box-label"><i class="fas fa-notes-medical"></i> Recommendations</div>
+            <div class="info-box-label"><i class="fas fa-location-dot"></i> Common Locations</div>
+            <div class="info-box-text">${esc(data.common_locations || 'Can vary by condition and person.')}</div>
+        </div>
+        <div class="info-box">
+            <div class="info-box-label"><i class="fas fa-people-arrows"></i> Contagiousness</div>
+            <div class="info-box-text">${esc(data.contagiousness || 'Unknown from this image alone.')}</div>
+        </div>
+        <div class="info-box full">
+            <div class="info-box-label"><i class="fas fa-kit-medical"></i> Care and Treatment Options</div>
+            <div class="info-box-text">${esc(data.care_options || data.recommendations || 'Consult a dermatologist.')}</div>
+        </div>
+        <div class="info-box">
+            <div class="info-box-label"><i class="fas fa-shield-heart"></i> Prevention</div>
+            <div class="info-box-text">${esc(data.prevention || 'Keep skin clean, avoid known triggers, and use sun protection when appropriate.')}</div>
+        </div>
+        <div class="info-box">
+            <div class="info-box-label"><i class="fas fa-ban"></i> What to Avoid</div>
+            <div class="info-box-text">${esc(data.what_to_avoid || 'Avoid scratching, picking, harsh products, and self-medicating with prescription treatments.')}</div>
+        </div>
+        <div class="info-box full">
+            <div class="info-box-label"><i class="fas fa-notes-medical"></i> Next Steps</div>
             <div class="info-box-text">${esc(data.recommendations || 'Consult a dermatologist.')}</div>
         </div>
         <div class="info-box danger full">
-            <div class="info-box-label"><i class="fas fa-triangle-exclamation"></i> Precautions</div>
-            <div class="info-box-text">${esc(data.precautions || 'Use sun protection and monitor for changes.')}</div>
+            <div class="info-box-label"><i class="fas fa-triangle-exclamation"></i> Complications and Precautions</div>
+            <div class="info-box-text">${esc(data.possible_complications || 'Seek care if the area spreads, becomes painful, bleeds, drains pus, or changes quickly.')} ${esc(data.precautions || 'Use sun protection and monitor for changes.')}</div>
+        </div>
+        <div class="info-box full">
+            <div class="info-box-label"><i class="fas fa-vial-circle-check"></i> How Doctors Confirm It</div>
+            <div class="info-box-text">${esc(data.how_doctors_confirm || 'Doctors may confirm with history, physical exam, dermoscopy, scraping/culture, blood tests, or biopsy depending on the suspected condition.')}</div>
+        </div>
+        <div class="info-box danger full">
+            <div class="info-box-label"><i class="fas fa-user-doctor"></i> When to See a Doctor</div>
+            <div class="info-box-text">${esc(data.when_to_see_doctor || 'Seek medical care if symptoms worsen, spread, bleed, become painful, or do not improve.')}</div>
         </div>
     `;
 
@@ -603,6 +645,12 @@ function showResult(data) {
         </a>
         <a href="${searchUrl}" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
             <i class="fas fa-magnifying-glass"></i> Research Online
+        </a>
+        <a href="${dermnetUrl}" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
+            <i class="fas fa-book-medical"></i> DermNet
+        </a>
+        <a href="${aadUrl}" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
+            <i class="fas fa-file-medical"></i> AAD
         </a>
         <button class="btn btn-ghost btn-sm" onclick="reset()">
             <i class="fas fa-rotate-left"></i> Analyze Another
