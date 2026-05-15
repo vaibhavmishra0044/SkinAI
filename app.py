@@ -431,6 +431,37 @@ def _image_data_url_for_api(image_path):
     b64 = base64.b64encode(buf.getvalue()).decode('ascii')
     return f"data:image/jpeg;base64,{b64}"
 
+def _upload_precheck_issue(image_path):
+    img = Image.open(image_path)
+    w, h = img.size
+    if min(w, h) < 160:
+        return "The image is too small for reliable skin analysis. Upload a clearer, higher-resolution close-up."
+    aspect = max(w / h, h / w)
+    if aspect > 1.70:
+        return "The image looks like a wide banner, screenshot, or non-focused photo. Please crop tightly around the affected skin area."
+    return None
+
+def _invalid_upload_result(reason):
+    info = {
+        "visual_findings": "No clear close-up skin condition was available for analysis.",
+        "description": "A disease prediction was not made because the uploaded image is not suitable for skin-condition analysis.",
+        "symptoms": "Not applicable from this image.",
+        "cause": "The image may be too wide, too small, unclear, or not focused on the affected skin area.",
+        "recommendations": "Upload a close-up photo where the rash, spot, patch, or lesion fills most of the frame.",
+        "risk_level": "Unknown",
+        "precautions": "Do not use this result for treatment decisions. Retake the image or consult a dermatologist.",
+        "when_to_see_doctor": "See a dermatologist if symptoms persist, spread, bleed, become painful, or change quickly.",
+        "icd": "N/A",
+    }
+    return [{
+        "class_key": "unknown_normal",
+        "class_name": "No Clear Skin Lesion Detected",
+        "confidence": 0.0,
+        "info": info,
+        "invalid_image": True,
+        "invalid_reason": reason,
+    }]
+
 def _json_from_model_text(text):
     cleaned = re.sub(r"^```(?:json)?|```$", "", text.strip(), flags=re.IGNORECASE | re.MULTILINE).strip()
     try:
@@ -753,7 +784,11 @@ def predict():
     try:
         file.save(tmp.name)
         tmp.close()
-        if USE_NVIDIA_API:
+        precheck_issue = _upload_precheck_issue(tmp.name)
+        if precheck_issue:
+            top3_raw = _invalid_upload_result(precheck_issue)
+            model_used = "AI Vision Analysis"
+        elif USE_NVIDIA_API:
             try:
                 top3_raw = run_nvidia_inference(tmp.name)
                 model_used = "AI Vision Analysis"
@@ -816,7 +851,7 @@ def predict():
     invalid_image = bool(primary_extra.get('invalid_image'))
     low_confidence = primary['confidence'] < 60.0 or invalid_image or fallback_warning
     if invalid_image:
-        result_warning = "This does not look like a clear close-up skin lesion image, so no reliable disease prediction was made."
+        result_warning = primary_extra.get("invalid_reason") or "This does not look like a clear close-up skin lesion image, so no reliable disease prediction was made."
     elif fallback_warning:
         result_warning = "Using limited local fallback because the advanced vision service is not configured or unavailable. Treat this only as an uncertain closest match."
     elif primary['confidence'] < 60.0:
