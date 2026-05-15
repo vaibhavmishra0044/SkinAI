@@ -547,10 +547,9 @@ Rules:
 - Reject non-diagnostic images: doctors, stethoscopes, medical icons, app backgrounds, posters, screenshots, distant body photos, normal hands/arms without a visible lesion, or any image where the skin condition is not the main subject.
 - If the image is not a usable close-up skin-condition photo, set is_skin_image=false, lesion_visible=false, condition_name="No clear skin lesion detected", condition_key="unknown_normal", confidence=0.
 - If the photo is blurry, far away, covered, or ambiguous, keep confidence low and explain what image quality issue limits the analysis.
+- Pay close attention to lesion shape and location. If the lesion is annular/ring-shaped with a scaly raised border and central clearing, strongly consider tinea corporis / ringworm rather than scalp/face conditions.
+- Do not diagnose scalp or face conditions unless the scalp or face is actually visible in the uploaded image.
 - Include clinically useful information, but state safe next steps. This is visual screening support, not a final diagnosis.
-
-Image:
-<img src="{data_url}" />
 """.strip()
 
     payload = {
@@ -560,7 +559,13 @@ Image:
                 "role": "system",
                 "content": "You are a cautious medical image screening assistant. Return strict JSON only.",
             },
-            {"role": "user", "content": prompt},
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": data_url}},
+                ],
+            },
         ],
         "temperature": 0,
         "max_tokens": 1200,
