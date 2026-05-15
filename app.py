@@ -512,7 +512,9 @@ Use this exact schema:
 
 Rules:
 - Do not restrict yourself to a fixed class list. Use the best dermatology condition name you can infer from the image.
-- If the image is not a close-up skin/lesion image, set is_skin_image=false, lesion_visible=false, condition_name="No clear skin lesion detected", condition_key="unknown_normal", confidence=0.
+- First decide whether this is a usable dermatology photo. It must be a close-up of an affected skin area where a lesion/rash/patch is clearly visible.
+- Reject non-diagnostic images: doctors, stethoscopes, medical icons, app backgrounds, posters, screenshots, distant body photos, normal hands/arms without a visible lesion, or any image where the skin condition is not the main subject.
+- If the image is not a usable close-up skin-condition photo, set is_skin_image=false, lesion_visible=false, condition_name="No clear skin lesion detected", condition_key="unknown_normal", confidence=0.
 - If the photo is blurry, far away, covered, or ambiguous, keep confidence low and explain what image quality issue limits the analysis.
 - Include clinically useful information, but state safe next steps. This is visual screening support, not a final diagnosis.
 
