@@ -1,0 +1,286 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account &mdash; SkinAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',sans-serif; min-height:100vh; display:flex; background:#0f172a; }
+
+        .hero {
+            flex:1; position:relative; overflow:hidden;
+            display:flex; flex-direction:column;
+            justify-content:center; align-items:center; padding:60px;
+            background: linear-gradient(135deg, #7c3aed 0%, #0ea5e9 55%, #0f172a 100%);
+        }
+        .hero::before {
+            content:''; position:absolute; inset:0;
+            background-image: radial-gradient(circle at 70% 30%, rgba(139,92,246,.3) 0%, transparent 50%),
+                              radial-gradient(circle at 20% 70%, rgba(14,165,233,.2) 0%, transparent 45%);
+        }
+        .hero-content { position:relative; z-index:1; color:white; max-width:380px; }
+        .hero-logo {
+            width:72px; height:72px; background:rgba(255,255,255,.15);
+            backdrop-filter:blur(10px); border-radius:20px;
+            display:flex; align-items:center; justify-content:center;
+            font-size:32px; margin-bottom:28px;
+            border:1px solid rgba(255,255,255,.2);
+        }
+        .hero h1 { font-size:36px; font-weight:900; letter-spacing:-1.2px; margin-bottom:12px; }
+        .hero-sub { font-size:15px; color:rgba(255,255,255,.7); line-height:1.65; }
+        .steps { margin-top:40px; padding-top:32px; border-top:1px solid rgba(255,255,255,.12); display:flex; flex-direction:column; gap:16px; }
+        .step { display:flex; align-items:center; gap:14px; }
+        .step-num {
+            width:34px; height:34px; border-radius:9px;
+            background:rgba(255,255,255,.15); flex-shrink:0;
+            display:flex; align-items:center; justify-content:center;
+            font-weight:800; font-size:14px;
+        }
+        .step-text { font-size:14px; color:rgba(255,255,255,.85); }
+
+        .form-panel {
+            width:480px; background:white;
+            display:flex; flex-direction:column; justify-content:center;
+            padding:52px;
+        }
+        .fp-tag {
+            display:inline-flex; align-items:center; gap:6px;
+            background:#ede9fe; color:#7c3aed;
+            font-size:12px; font-weight:700; padding:5px 12px; border-radius:20px; margin-bottom:18px;
+        }
+        .fp-title { font-size:28px; font-weight:800; color:#0f172a; letter-spacing:-.5px; }
+        .fp-sub { font-size:15px; color:#64748b; margin-top:4px; margin-bottom:26px; }
+
+        .flash { display:flex; align-items:center; gap:9px; padding:11px 14px; border-radius:9px; font-size:13px; font-weight:500; margin-bottom:14px; }
+        .flash-danger  { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; }
+        .flash-success { background:#dcfce7; color:#166534; border:1px solid #bbf7d0; }
+        .flash-info    { background:#e0f2fe; color:#075985; border:1px solid #bae6fd; }
+        .flash-warning { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
+
+        .fg { margin-bottom:16px; }
+        .fg label { display:block; font-size:13px; font-weight:600; color:#334155; margin-bottom:5px; }
+        .input-box { position:relative; }
+        .input-box .icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:14px; pointer-events:none; }
+        .inp {
+            width:100%; padding:11px 14px 11px 42px;
+            border:1.5px solid #e2e8f0; border-radius:10px;
+            font-size:14px; font-family:inherit; color:#1e293b;
+            background:#f8fafc; transition:all .15s;
+        }
+        .inp:focus { outline:none; border-color:#8b5cf6; box-shadow:0 0 0 3px rgba(139,92,246,.12); background:white; }
+        .inp-hint { font-size:12px; color:#94a3b8; margin-top:4px; }
+
+        .btn-submit {
+            width:100%; padding:13px; margin-top:6px;
+            background:linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color:white; border:none; border-radius:10px;
+            font-size:15px; font-weight:700; font-family:inherit;
+            cursor:pointer; transition:all .2s;
+            box-shadow:0 4px 14px rgba(139,92,246,.35);
+        }
+        .btn-submit:hover { transform:translateY(-2px); box-shadow:0 8px 22px rgba(139,92,246,.4); }
+        .btn-submit:active { transform:translateY(0); }
+        .btn-submit:disabled { opacity:.7; cursor:not-allowed; transform:none; }
+        .form-panel { animation: slideIn .35s ease; }
+        @keyframes slideIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+
+        .fp-footer { text-align:center; margin-top:20px; font-size:14px; color:#64748b; }
+        .fp-footer a { color:#7c3aed; text-decoration:none; font-weight:600; }
+        .fp-footer a:hover { text-decoration:underline; }
+
+        @media (max-width:900px) {
+            .hero { display:none; }
+            .form-panel { width:100%; max-width:100%; padding:36px 20px; }
+        }
+
+        /* Product-style auth refresh */
+        body {
+            background:
+                linear-gradient(135deg, rgba(7,17,31,.96), rgba(10,38,42,.95)),
+                #07111f;
+        }
+        .hero {
+            align-items:flex-start;
+            background:
+                linear-gradient(135deg, rgba(7,17,31,.90), rgba(10,38,42,.76)),
+                url('/static/background.jpg');
+            background-size:cover;
+            background-position:center;
+        }
+        .hero::before {
+            background-image:
+                linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(255,255,255,.05) 1px, transparent 1px);
+            background-size:46px 46px;
+        }
+        .hero-content { max-width:520px; }
+        .hero-logo {
+            width:64px; height:64px; border-radius:16px;
+            background:linear-gradient(135deg, #14b8a6, #f97316);
+            border:1px solid rgba(255,255,255,.24);
+        }
+        .hero h1 { font-size:clamp(38px, 5vw, 64px); letter-spacing:0; line-height:1; }
+        .hero-sub { font-size:16px; max-width:460px; }
+        .steps {
+            gap:10px;
+            border-top:none;
+            padding-top:0;
+            margin-top:24px;
+        }
+        .step {
+            padding:10px;
+            border-radius:8px;
+            background:rgba(255,255,255,.08);
+            border:1px solid rgba(255,255,255,.12);
+        }
+        .step-num {
+            border-radius:8px;
+            background:rgba(20,184,166,.18);
+            color:#99f6e4;
+        }
+        .auth-scan-card {
+            margin-top:22px;
+            width:min(100%, 430px);
+            border:1px solid rgba(255,255,255,.16);
+            background:rgba(255,255,255,.10);
+            border-radius:8px;
+            padding:14px;
+            backdrop-filter:blur(16px);
+        }
+        .auth-scan-top {
+            display:flex; align-items:center; justify-content:space-between;
+            color:rgba(255,255,255,.74);
+            font-size:12px; font-weight:800; margin-bottom:12px;
+        }
+        .auth-mini-grid {
+            display:grid;
+            grid-template-columns:repeat(3,1fr);
+            gap:8px;
+        }
+        .auth-mini {
+            min-height:74px;
+            border-radius:8px;
+            border:1px solid rgba(255,255,255,.14);
+            background:rgba(7,17,31,.28);
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            gap:7px;
+            color:rgba(255,255,255,.72);
+            font-size:11px;
+            font-weight:800;
+            text-align:center;
+        }
+        .auth-mini i { color:#5eead4; font-size:18px; }
+        .form-panel {
+            width:500px;
+            background:rgba(248,250,252,.96);
+            border-left:1px solid rgba(255,255,255,.45);
+            box-shadow:-24px 0 80px rgba(7,17,31,.18);
+        }
+        .fp-tag {
+            background:#ccfbf1;
+            color:#115e59;
+            border:1px solid rgba(15,118,110,.16);
+        }
+        .fp-title { letter-spacing:0; }
+        .inp { border-radius:12px; }
+        .inp:focus { border-color:#14b8a6; box-shadow:0 0 0 4px rgba(20,184,166,.14); }
+        .btn-submit {
+            border-radius:999px;
+            background:linear-gradient(135deg, #14b8a6, #0f766e);
+            box-shadow:0 16px 34px rgba(15,118,110,.24);
+        }
+        .btn-submit:hover { box-shadow:0 20px 44px rgba(15,118,110,.30); }
+        .fp-footer a { color:#0f766e; }
+        @media (max-width:900px) {
+            .hero { display:none; }
+            .form-panel { width:100%; min-height:100vh; padding:36px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <div class="hero-content">
+        <div class="hero-logo"><i class="fas fa-user-plus"></i></div>
+        <h1>Join SkinAI</h1>
+        <p class="hero-sub">Create your account and get AI-powered skin disease analysis in minutes. Free to use, no credit card needed.</p>
+        <div class="steps">
+            <div class="step"><div class="step-num">1</div><div class="step-text">Create your free account</div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-text">Upload a skin image for analysis</div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-text">Receive instant AI detection results</div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-text">Connect with specialist dermatologists</div></div>
+        </div>
+        <div class="auth-scan-card" aria-hidden="true">
+            <div class="auth-scan-top">
+                <span><i class="fas fa-layer-group"></i> Your workspace</span>
+                <span>Free</span>
+            </div>
+            <div class="auth-mini-grid">
+                <div class="auth-mini"><i class="fas fa-microscope"></i> Scan</div>
+                <div class="auth-mini"><i class="fas fa-chart-simple"></i> Track</div>
+                <div class="auth-mini"><i class="fas fa-user-doctor"></i> Follow up</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="form-panel">
+    <div class="fp-tag"><i class="fas fa-user-shield"></i> Free Account</div>
+    <div class="fp-title">Create Account</div>
+    <div class="fp-sub">Fill in your details to get started today</div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">
+            <i class="fas {% if category == 'success' %}fa-circle-check{% elif category == 'danger' %}fa-circle-exclamation{% else %}fa-circle-info{% endif %}"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('register') }}">
+        <div class="fg">
+            <label>Username</label>
+            <div class="input-box">
+                <span class="icon"><i class="fas fa-user"></i></span>
+                <input class="inp" type="text" name="username" placeholder="Choose a username" required autofocus autocomplete="username">
+            </div>
+        </div>
+        <div class="fg">
+            <label>Email Address</label>
+            <div class="input-box">
+                <span class="icon"><i class="fas fa-envelope"></i></span>
+                <input class="inp" type="email" name="email" placeholder="your@email.com" required autocomplete="email">
+            </div>
+        </div>
+        <div class="fg">
+            <label>Password</label>
+            <div class="input-box">
+                <span class="icon"><i class="fas fa-lock"></i></span>
+                <input class="inp" type="password" name="password" placeholder="At least 6 characters" required autocomplete="new-password" minlength="6">
+            </div>
+            <div class="inp-hint"><i class="fas fa-circle-info"></i> Minimum 6 characters required</div>
+        </div>
+        <button type="submit" class="btn-submit" id="regBtn"><i class="fas fa-user-plus"></i> Create My Account</button>
+    </form>
+
+    <p class="fp-footer">Already have an account? <a href="{{ url_for('login') }}">Sign in here</a></p>
+</div>
+
+<script>
+document.querySelector('form').addEventListener('submit', function() {
+    const btn = document.getElementById('regBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Creating account...';
+});
+</script>
+</body>
+</html>

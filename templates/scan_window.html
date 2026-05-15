@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkinAI &mdash; Disease Detection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary:        #0ea5e9;
+            --primary-dark:   #0284c7;
+            --primary-light:  #e0f2fe;
+            --accent:         #8b5cf6;
+            --success:        #22c55e;
+            --success-light:  #dcfce7;
+            --danger:         #ef4444;
+            --danger-light:   #fee2e2;
+            --warning:        #f59e0b;
+            --warning-light:  #fef3c7;
+            --orange-light:   #ffedd5;
+            --gray-50:  #f8fafc; --gray-100: #f1f5f9; --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1; --gray-400: #94a3b8; --gray-500: #64748b;
+            --gray-600: #475569; --gray-700: #334155; --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --radius: 12px;
+            --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--gray-100);
+            color: var(--gray-800);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ── Topbar ─────────────────────────────────────────────── */
+        .topbar {
+            height: 56px;
+            background: var(--gray-900);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            flex-shrink: 0;
+            border-bottom: 1px solid rgba(255,255,255,.07);
+        }
+        .topbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .brand-icon {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, #38bdf8, var(--primary-dark));
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; color: white;
+            box-shadow: 0 3px 10px rgba(14,165,233,.4);
+        }
+        .brand-text { font-size: 16px; font-weight: 800; color: white; }
+        .brand-sub  { font-size: 10px; color: var(--gray-500); }
+        .topbar-right { display: flex; align-items: center; gap: 14px; }
+        .model-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 10px; border-radius: 20px;
+            background: rgba(14,165,233,.18); color: #38bdf8;
+            font-size: 11px; font-weight: 600;
+        }
+        .back-link {
+            display: inline-flex; align-items: center; gap: 6px;
+            color: var(--gray-400); text-decoration: none;
+            font-size: 13px; font-weight: 500;
+            padding: 6px 12px; border-radius: 8px;
+            transition: all .15s;
+        }
+        .back-link:hover { background: rgba(255,255,255,.07); color: white; }
+        .login-link {
+            display: inline-flex; align-items: center; gap: 6px;
+            color: var(--primary); text-decoration: none;
+            font-size: 13px; font-weight: 600;
+            padding: 6px 12px; border-radius: 8px;
+            border: 1px solid rgba(14,165,233,.3);
+            transition: all .15s;
+        }
+        .login-link:hover { background: rgba(14,165,233,.1); }
+
+        /* ── Layout ─────────────────────────────────────────────── */
+        .scan-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* ── Left Panel ─────────────────────────────────────────── */
+        .left-panel {
+            width: 400px;
+            flex-shrink: 0;
+            background: white;
+            border-right: 1px solid var(--gray-200);
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .panel-title {
+            font-size: 13px; font-weight: 700;
+            color: var(--gray-500);
+            text-transform: uppercase; letter-spacing: .06em;
+            display: flex; align-items: center; gap: 7px;
+        }
+        .panel-title i { color: var(--primary); }
+
+        /* Upload zone */
+        .upload-zone {
+            border: 2.5px dashed var(--gray-300);
+            border-radius: 14px;
+            padding: 44px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s;
+            background: var(--gray-50);
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+        .upload-zone i { font-size: 40px; color: var(--gray-300); display: block; margin-bottom: 12px; }
+        .upload-zone:hover i, .upload-zone.dragover i { color: var(--primary); }
+        .upload-title { font-size: 14px; font-weight: 700; color: var(--gray-700); }
+        .upload-hint  { font-size: 12px; color: var(--gray-400); margin-top: 4px; }
+        #fileInput { display: none; }
+
+        /* Preview */
+        #previewWrap { display: none; }
+        #previewImg {
+            width: 100%; border-radius: 10px;
+            border: 2px solid var(--gray-200);
+            max-height: 260px; object-fit: contain;
+            background: var(--gray-50);
+        }
+        .file-info { font-size: 12px; color: var(--gray-400); font-weight: 600; text-align: center; margin-top: 6px; }
+
+        /* Analyze button */
+        .btn-analyze {
+            display: none; width: 100%; padding: 14px;
+            background: linear-gradient(135deg, var(--primary), #6d28d9);
+            color: white; border: none; border-radius: 12px;
+            font-size: 15px; font-weight: 700; font-family: inherit;
+            cursor: pointer; transition: all .2s;
+            box-shadow: 0 4px 14px rgba(14,165,233,.35);
+        }
+        .btn-analyze:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(14,165,233,.4); }
+        .btn-analyze:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* Loading */
+        #loadingWrap { display: none; text-align: center; padding: 32px 12px; }
+        .spinner {
+            width: 52px; height: 52px;
+            border: 4px solid var(--gray-200); border-top-color: var(--primary);
+            border-radius: 50%; animation: spin .75s linear infinite;
+            margin: 0 auto 14px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-steps { margin-top: 12px; text-align: left; display: inline-block; }
+        .loading-step {
+            display: flex; align-items: center; gap: 9px;
+            font-size: 13px; color: var(--gray-400); padding: 3px 0;
+            transition: color .3s;
+        }
+        .loading-step.active { color: var(--primary); font-weight: 600; }
+        .loading-step.done   { color: var(--success); }
+        .loading-step i { font-size: 12px; width: 16px; text-align: center; }
+
+        /* Tips */
+        .tips-section {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 10px;
+            padding: 14px;
+        }
+        .tip {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 12px; color: var(--gray-500); padding: 3px 0;
+        }
+        .tip i { color: var(--success); font-size: 11px; }
+        .tips-footer {
+            margin-top: 10px; padding-top: 10px;
+            border-top: 1px solid var(--gray-200);
+            font-size: 11px; color: var(--gray-400);
+        }
+
+        /* ── Right Panel ─────────────────────────────────────────── */
+        .right-panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 28px;
+            background: var(--gray-50);
+        }
+
+        /* Placeholder */
+        #placeholder {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 80px 24px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        #placeholder i { font-size: 72px; color: var(--gray-200); margin-bottom: 20px; }
+        #placeholder h3 { font-size: 20px; font-weight: 700; color: var(--gray-400); margin-bottom: 8px; }
+        #placeholder p  { font-size: 14px; color: var(--gray-400); max-width: 320px; line-height: 1.6; }
+        .placeholder-badge {
+            margin-top: 20px;
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 14px; border-radius: 20px;
+            background: var(--primary-light); color: var(--primary-dark);
+            font-size: 12px; font-weight: 600;
+        }
+
+        /* Result card */
+        #resultWrap { display: none; }
+        #resultWrap.show { display: block; animation: fadeUp .4s ease; }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(16px);} to{opacity:1;transform:translateY(0);} }
+
+        .result-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+        }
+        .result-header { padding: 24px; }
+        .result-badge  { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .result-name   { font-size: 28px; font-weight: 900; color: var(--gray-900); letter-spacing: -.5px; margin-bottom: 12px; }
+        .risk-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 14px; border-radius: 20px;
+            font-size: 13px; font-weight: 700;
+        }
+        .conf-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 14px; border-radius: 20px;
+            font-size: 13px; font-weight: 700;
+            background: var(--gray-100); color: var(--gray-700);
+        }
+        .icd-chip {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 5px 12px; border-radius: 20px;
+            font-size: 12px; font-weight: 600;
+            background: #f1f5f9; color: var(--gray-500);
+        }
+        .model-used-chip {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 600;
+            background: var(--primary-light); color: var(--primary-dark);
+        }
+        .conf-bar-wrap { margin-top: 12px; }
+        .conf-bar-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--gray-500); margin-bottom: 5px; }
+        .conf-bar-bg { height: 10px; background: var(--gray-100); border-radius: 5px; overflow: hidden; }
+        .conf-bar-fill { height: 100%; border-radius: 5px; transition: width 1.2s cubic-bezier(.4,0,.2,1); }
+
+        .low-conf-alert {
+            margin: 0 24px 12px;
+            padding: 11px 14px;
+            background: #fffbeb; border: 1px solid #fde68a; border-radius: 9px;
+            font-size: 13px; color: #92400e;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        .section-divider { border: none; border-top: 1px solid var(--gray-100); }
+
+        .chart-section { padding: 16px 24px; }
+        .section-title {
+            font-size: 12px; font-weight: 700; color: var(--gray-500);
+            text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px;
+        }
+        canvas#top3Chart { max-height: 130px; }
+
+        .info-section { padding: 16px 24px; }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        @media(max-width: 700px) { .info-grid { grid-template-columns: 1fr; } }
+        .info-box {
+            background: var(--gray-50); border: 1px solid var(--gray-200);
+            border-radius: 10px; padding: 14px;
+        }
+        .info-box.full { grid-column: 1/-1; }
+        .info-box.danger { background: #fff0f0; border-color: #fecaca; }
+        .info-box-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--gray-400); margin-bottom: 6px; }
+        .info-box.danger .info-box-label { color: #dc2626; }
+        .info-box-text  { font-size: 13px; line-height: 1.7; color: var(--gray-700); }
+        .info-box.danger .info-box-text { color: #991b1b; }
+
+        .disclaimer {
+            margin: 0 24px 16px;
+            padding: 12px 14px;
+            background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 9px;
+            font-size: 12px; color: #075985; line-height: 1.6;
+        }
+        .result-actions {
+            padding: 16px 24px;
+            border-top: 1px solid var(--gray-100);
+            display: flex; gap: 8px; flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 9px 18px; border-radius: 8px;
+            font-size: 14px; font-weight: 600; font-family: inherit;
+            cursor: pointer; transition: all .15s;
+            border: none; text-decoration: none; white-space: nowrap;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+        .btn-outline { background: white; color: var(--gray-700); border: 1px solid var(--gray-300); }
+        .btn-outline:hover { background: var(--gray-50); }
+        .btn-ghost { background: transparent; color: var(--gray-600); }
+        .btn-ghost:hover { background: var(--gray-100); }
+        .btn-sm { padding: 7px 14px; font-size: 13px; }
+
+        /* Mobile responsive */
+        @media (max-width: 900px) {
+            body { overflow: auto; height: auto; }
+            .scan-container { flex-direction: column; overflow: visible; }
+            .left-panel { width: 100%; border-right: none; border-bottom: 1px solid var(--gray-200); }
+            .right-panel { min-height: 60vh; }
+            #placeholder { height: auto; padding: 48px 24px; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+
+        /* SkinInsight-inspired scan window refresh */
+        :root {
+            --primary:        #0f766e;
+            --primary-dark:   #115e59;
+            --primary-light:  #ccfbf1;
+            --accent:         #f97316;
+            --success:        #16a34a;
+            --success-light:  #dcfce7;
+            --danger:         #e11d48;
+            --danger-light:   #ffe4e6;
+            --warning:        #d97706;
+            --warning-light:  #fef3c7;
+            --gray-50:  #f8fafc; --gray-100: #eef2f7; --gray-200: #dfe7ef;
+            --gray-300: #c7d2de; --gray-400: #8b9aaa; --gray-500: #64748b;
+            --gray-600: #475569; --gray-700: #263548; --gray-800: #162234;
+            --gray-900: #07111f;
+            --radius: 8px;
+            --shadow: 0 16px 45px rgba(15, 23, 42, .08);
+            --shadow-md: 0 22px 60px rgba(15, 23, 42, .12);
+        }
+        body {
+            background:
+                linear-gradient(135deg, rgba(15,118,110,.12), transparent 28%),
+                linear-gradient(315deg, rgba(249,115,22,.10), transparent 24%),
+                linear-gradient(90deg, rgba(15,23,42,.045) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(15,23,42,.045) 1px, transparent 1px),
+                #f7fafc;
+            background-size:auto, auto, 42px 42px, 42px 42px, auto;
+        }
+        .topbar {
+            height:64px;
+            background:
+                linear-gradient(135deg, rgba(7,17,31,.96), rgba(10,38,42,.94)),
+                url('/static/background.jpg');
+            background-size:cover;
+            background-position:center;
+            border-bottom:1px solid rgba(255,255,255,.10);
+            box-shadow:0 18px 52px rgba(7,17,31,.18);
+        }
+        .brand-icon {
+            border-radius:14px;
+            background:linear-gradient(135deg, #14b8a6, #f97316);
+            box-shadow:0 16px 34px rgba(20,184,166,.22);
+        }
+        .model-badge {
+            background:rgba(20,184,166,.18);
+            color:#99f6e4;
+            border:1px solid rgba(153,246,228,.20);
+        }
+        .login-link {
+            color:#99f6e4;
+            border-color:rgba(153,246,228,.28);
+        }
+        .back-link:hover,
+        .login-link:hover {
+            text-decoration:none;
+        }
+        .left-panel {
+            width:420px;
+            background:rgba(255,255,255,.86);
+            border-right:1px solid rgba(148,163,184,.24);
+            box-shadow:18px 0 52px rgba(15,23,42,.08);
+            backdrop-filter:blur(16px);
+            padding:22px;
+        }
+        .panel-title {
+            color:var(--gray-700);
+            letter-spacing:.08em;
+        }
+        .upload-zone {
+            border:2px dashed rgba(15,118,110,.28);
+            border-radius:8px;
+            background:
+                linear-gradient(180deg, rgba(204,251,241,.45), rgba(248,250,252,.92));
+            padding:50px 16px;
+            position:relative;
+            overflow:hidden;
+        }
+        .upload-zone::before {
+            content:"";
+            position:absolute; inset:14px;
+            border:1px solid rgba(15,118,110,.10);
+            border-radius:8px;
+            pointer-events:none;
+        }
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color:#14b8a6;
+            background:var(--primary-light);
+            transform:translateY(-2px);
+        }
+        .upload-zone i {
+            color:var(--primary);
+        }
+        .upload-title {
+            color:var(--gray-800);
+            font-size:16px;
+            font-weight:800;
+        }
+        #previewImg {
+            border-radius:8px;
+            border-color:rgba(148,163,184,.28);
+        }
+        .btn-analyze,
+        .btn-primary {
+            border-radius:999px;
+            background:linear-gradient(135deg, #14b8a6, #0f766e);
+            box-shadow:0 16px 34px rgba(15,118,110,.24);
+        }
+        .btn-analyze:hover,
+        .btn-primary:hover {
+            background:linear-gradient(135deg, #0f766e, #115e59);
+            box-shadow:0 20px 44px rgba(15,118,110,.30);
+        }
+        .tips-section {
+            border-radius:8px;
+            background:rgba(255,255,255,.80);
+            border-color:rgba(148,163,184,.24);
+            box-shadow:var(--shadow);
+        }
+        .right-panel {
+            background:transparent;
+            padding:30px;
+        }
+        #placeholder {
+            position:relative;
+            overflow:hidden;
+            min-height:calc(100vh - 124px);
+            border-radius:8px;
+            border:1px solid rgba(255,255,255,.14);
+            background:
+                linear-gradient(135deg, rgba(7,17,31,.94), rgba(10,38,42,.90)),
+                url('/static/background.jpg');
+            background-size:cover;
+            background-position:center;
+            color:white;
+            box-shadow:0 26px 80px rgba(7,17,31,.20);
+        }
+        #placeholder::before {
+            content:"";
+            position:absolute; inset:0;
+            background-image:
+                linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(255,255,255,.05) 1px, transparent 1px);
+            background-size:44px 44px;
+            pointer-events:none;
+        }
+        #placeholder > * { position:relative; z-index:1; }
+        #placeholder i {
+            color:#99f6e4;
+            opacity:.72;
+        }
+        #placeholder h3 {
+            color:white;
+            font-size:clamp(28px,4vw,48px);
+            font-weight:900;
+            letter-spacing:0;
+        }
+        #placeholder p {
+            color:rgba(255,255,255,.76);
+            max-width:480px;
+        }
+        .placeholder-badge {
+            background:rgba(20,184,166,.18);
+            color:#99f6e4;
+            border:1px solid rgba(153,246,228,.24);
+        }
+        .result-card {
+            border-radius:8px;
+            border-color:rgba(148,163,184,.24);
+            box-shadow:var(--shadow-md);
+        }
+        .result-header {
+            background:linear-gradient(135deg, rgba(204,251,241,.58), rgba(255,237,213,.42));
+        }
+        .info-box {
+            border-radius:8px;
+            background:rgba(248,250,252,.86);
+        }
+        .btn-outline,
+        .btn-ghost {
+            border-radius:999px;
+        }
+        @media (max-width: 900px) {
+            .left-panel { width:100%; padding:18px; }
+            .right-panel { padding:18px; }
+            #placeholder { min-height:440px; }
+        }
+        @media (max-width: 620px) {
+            .topbar {
+                height:auto;
+                padding:12px;
+                flex-wrap:wrap;
+                gap:10px;
+            }
+            .topbar-right {
+                width:100%;
+                justify-content:space-between;
+                gap:8px;
+                flex-wrap:wrap;
+            }
+            .model-badge,
+            .back-link,
+            .login-link {
+                font-size:12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Topbar -->
+<header class="topbar">
+    <div class="topbar-brand">
+        <div class="brand-icon"><i class="fas fa-microscope"></i></div>
+        <div>
+            <div class="brand-text">SkinAI</div>
+            <div class="brand-sub">AI Skin Analysis</div>
+        </div>
+    </div>
+    <div class="topbar-right">
+        <span class="model-badge" id="modelBadgeTop">
+            <i class="fas fa-brain"></i> AI Model
+        </span>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('dashboard') }}" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+        {% else %}
+        <a href="{{ url_for('login') }}" class="login-link">
+            <i class="fas fa-right-to-bracket"></i> Login to Save Results
+        </a>
+        {% endif %}
+    </div>
+</header>
+
+<!-- Main content -->
+<div class="scan-container">
+
+    <!-- Left: Upload Panel -->
+    <div class="left-panel">
+        <div class="panel-title">
+            <i class="fas fa-upload"></i> Upload Skin Image
+        </div>
+
+        <!-- Upload zone -->
+        <div class="upload-zone" id="uploadZone">
+            <i class="fas fa-cloud-arrow-up"></i>
+            <div class="upload-title">Click to upload or drag &amp; drop</div>
+            <div class="upload-hint">JPG, PNG, WebP &mdash; Max 10 MB</div>
+            <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp">
+        </div>
+
+        <!-- Preview -->
+        <div id="previewWrap">
+            <img id="previewImg" alt="Preview">
+            <div class="file-info" id="fileInfo"></div>
+        </div>
+
+        <!-- Analyze button -->
+        <button id="analyzeBtn" class="btn-analyze" type="button">
+            <i class="fas fa-brain"></i>&nbsp; Analyze with AI
+        </button>
+
+        <!-- Loading -->
+        <div id="loadingWrap">
+            <div class="spinner"></div>
+            <p style="font-size:13px;color:var(--gray-500);font-weight:600;">Analyzing image...</p>
+            <div class="loading-steps">
+                <div class="loading-step active" id="ls1"><i class="fas fa-upload"></i> Reading image...</div>
+                <div class="loading-step" id="ls2"><i class="fas fa-wand-magic-sparkles"></i> Preprocessing...</div>
+                <div class="loading-step" id="ls3"><i class="fas fa-brain"></i> Running AI model...</div>
+                <div class="loading-step" id="ls4"><i class="fas fa-chart-bar"></i> Computing results...</div>
+            </div>
+        </div>
+
+        <!-- Tips -->
+        <div class="tips-section">
+            <div class="panel-title" style="margin-bottom:10px;">
+                <i class="fas fa-lightbulb" style="color:var(--warning);"></i> Tips for Best Results
+            </div>
+            <div class="tip"><i class="fas fa-check-circle"></i> Use a clear, close-up dermoscopic photo</div>
+            <div class="tip"><i class="fas fa-check-circle"></i> Good lighting — avoid shadows or glare</div>
+            <div class="tip"><i class="fas fa-check-circle"></i> Focus on the affected skin area only</div>
+            <div class="tip"><i class="fas fa-check-circle"></i> Avoid blurry or low-resolution images</div>
+            <div class="tip"><i class="fas fa-check-circle"></i> No filters — cropping is fine</div>
+            <div class="tips-footer">
+                <i class="fas fa-info-circle"></i>
+                Powered by AI skin disease classification.
+            </div>
+        </div>
+
+        {% if not current_user.is_authenticated %}
+        <div style="padding:12px;background:var(--primary-light);border-radius:10px;font-size:12px;color:var(--primary-dark);display:flex;align-items:center;gap:8px;">
+            <i class="fas fa-info-circle"></i>
+            <span><a href="{{ url_for('login') }}" style="font-weight:700;color:var(--primary-dark);">Log in</a> to save your results to history.</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right: Results Panel -->
+    <div class="right-panel">
+
+        <!-- Placeholder -->
+        <div id="placeholder">
+            <i class="fas fa-magnifying-glass-plus"></i>
+            <h3>Ready to Analyze</h3>
+            <p>Upload a skin image on the left and click "Analyze with AI" to get an instant AI-powered skin disease assessment.</p>
+            <div class="placeholder-badge">
+                <i class="fas fa-shield-halved"></i> 7 Detectable Skin Conditions
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div id="resultWrap">
+            <div class="result-card">
+                <div class="result-header" id="resultHeader"></div>
+
+                <div id="lowConfAlert" class="low-conf-alert" style="display:none;">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    <div><strong>Low confidence:</strong> The model is uncertain. This may not be a dermoscopic image, or the condition may present atypically. Always consult a dermatologist.</div>
+                </div>
+
+                <hr class="section-divider">
+
+                <div class="chart-section">
+                    <div class="section-title"><i class="fas fa-chart-bar"></i> Top 3 Predictions</div>
+                    <canvas id="top3Chart"></canvas>
+                </div>
+
+                <hr class="section-divider">
+
+                <div class="info-section">
+                    <div class="section-title"><i class="fas fa-file-medical"></i> Condition Details</div>
+                    <div class="info-grid" id="infoGrid"></div>
+                </div>
+
+                <div class="disclaimer">
+                    <i class="fas fa-circle-info"></i>
+                    <strong>Medical Disclaimer:</strong> This AI tool is for educational purposes only.
+                    It is <strong>not a medical diagnosis</strong>. Always consult a qualified dermatologist
+                    or healthcare provider for proper diagnosis and treatment.
+                </div>
+
+                <div class="result-actions" id="resultActions"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const uploadZone  = document.getElementById('uploadZone');
+const fileInput   = document.getElementById('fileInput');
+const previewWrap = document.getElementById('previewWrap');
+const previewImg  = document.getElementById('previewImg');
+const fileInfo    = document.getElementById('fileInfo');
+const analyzeBtn  = document.getElementById('analyzeBtn');
+const loadingWrap = document.getElementById('loadingWrap');
+const placeholder = document.getElementById('placeholder');
+const resultWrap  = document.getElementById('resultWrap');
+const modelBadge  = document.getElementById('modelBadgeTop');
+let selectedFile  = null;
+let chartInstance = null;
+
+/* ── Drag & Drop ───────────────────────────────────────── */
+uploadZone.addEventListener('click', () => fileInput.click());
+uploadZone.addEventListener('dragover',  e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; handleFile(); }
+});
+fileInput.addEventListener('change', handleFile);
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function handleFile() {
+    selectedFile = fileInput.files[0];
+    if (!selectedFile) return;
+    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowed.includes(selectedFile.type)) {
+        alert('Please upload a JPG, PNG, or WebP image.');
+        fileInput.value = ''; selectedFile = null; return;
+    }
+    if (selectedFile.size > 10 * 1024 * 1024) {
+        alert('File too large. Maximum size is 10 MB.');
+        fileInput.value = ''; selectedFile = null; return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+        previewImg.src = e.target.result;
+        const mb = (selectedFile.size / (1024 * 1024)).toFixed(2);
+        fileInfo.innerHTML = esc(selectedFile.name) + ' &mdash; ' + mb + ' MB';
+        previewWrap.style.display = 'block';
+        uploadZone.style.display = 'none';
+        analyzeBtn.style.display = 'block';
+        resultWrap.classList.remove('show');
+        placeholder.style.display = 'flex';
+    };
+    reader.readAsDataURL(selectedFile);
+}
+
+/* ── Analyze ───────────────────────────────────────────── */
+analyzeBtn.addEventListener('click', async () => {
+    if (!selectedFile) return;
+    const fd = new FormData();
+    fd.append('file', selectedFile);
+    analyzeBtn.disabled = true;
+    loadingWrap.style.display = 'block';
+    analyzeBtn.style.display = 'none';
+    placeholder.style.display = 'none';
+    resultWrap.classList.remove('show');
+
+    // Animate steps
+    const steps = ['ls1', 'ls2', 'ls3', 'ls4'];
+    let stepIdx = 0;
+    function nextStep() {
+        if (stepIdx > 0) {
+            const prev = document.getElementById(steps[stepIdx - 1]);
+            prev.classList.remove('active');
+            prev.classList.add('done');
+            prev.querySelector('i').className = 'fas fa-check-circle';
+        }
+        if (stepIdx < steps.length) {
+            document.getElementById(steps[stepIdx]).classList.add('active');
+            stepIdx++;
+        }
+    }
+    nextStep();
+    const t1 = setTimeout(nextStep, 700);
+    const t2 = setTimeout(nextStep, 1400);
+    const t3 = setTimeout(nextStep, 2100);
+
+    try {
+        const resp = await fetch('/predict', { method: 'POST', body: fd });
+        const data = await resp.json();
+        if (!resp.ok) { alert(data.error || 'Prediction failed.'); reset(); return; }
+        showResult(data);
+    } catch (err) {
+        alert('Network error: ' + (err.message || 'Please try again.'));
+        reset();
+    } finally {
+        clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
+        loadingWrap.style.display = 'none';
+        analyzeBtn.disabled = false;
+    }
+});
+
+function riskStyle(risk) {
+    const map = {
+        'Low':       { bg: '#dcfce7', color: '#166534' },
+        'Moderate':  { bg: '#fef3c7', color: '#92400e' },
+        'High':      { bg: '#ffedd5', color: '#9a3412' },
+        'Very High': { bg: '#fee2e2', color: '#991b1b' },
+    };
+    return map[risk] || { bg: '#f1f5f9', color: '#475569' };
+}
+function confColor(c) {
+    if (c >= 75) return ['#22c55e', '#dcfce7'];
+    if (c >= 50) return ['#f59e0b', '#fef3c7'];
+    return ['#ef4444', '#fee2e2'];
+}
+
+function showResult(data) {
+    const conf  = typeof data.confidence === 'number' ? data.confidence : 0;
+    const risk  = data.risk_level || 'Unknown';
+    const icd   = data.icd || 'N/A';
+    const rs    = riskStyle(risk);
+    const [cc]  = confColor(conf);
+    const top3  = data.top3 || [];
+    const searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent((data.predicted_class || '') + ' skin condition treatment');
+    const mapsUrl   = 'https://www.google.com/maps/search/dermatologist+near+me';
+    const modelTxt  = data.model_used || 'AI Model';
+
+    // Update topbar badge
+    modelBadge.innerHTML = '<i class="fas fa-brain"></i> ' + esc(modelTxt);
+
+    // Header
+    document.getElementById('resultHeader').innerHTML = `
+        <div class="result-badge">
+            <span class="risk-chip" style="background:${rs.bg};color:${rs.color};">
+                <i class="fas fa-shield-virus"></i> ${esc(risk)} Risk
+            </span>
+            <span class="conf-chip">
+                <i class="fas fa-percent"></i> ${conf.toFixed(1)}% Confidence
+            </span>
+            <span class="icd-chip">ICD: ${esc(icd)}</span>
+            <span class="model-used-chip"><i class="fas fa-microchip"></i> ${esc(modelTxt)}</span>
+        </div>
+        <div class="result-name">${esc(data.predicted_class || 'Unknown')}</div>
+        <div class="conf-bar-wrap">
+            <div class="conf-bar-label"><span>Model Confidence</span><span>${conf.toFixed(1)}%</span></div>
+            <div class="conf-bar-bg">
+                <div class="conf-bar-fill" id="confBarFill" style="width:0%;background:${cc};"></div>
+            </div>
+        </div>
+    `;
+
+    // Low confidence alert
+    document.getElementById('lowConfAlert').style.display = conf < 50 ? 'flex' : 'none';
+
+    // Chart
+    const labels = top3.map(p => p.class_name);
+    const values = top3.map(p => p.confidence);
+    const colors = [cc, '#94a3b8', '#cbd5e1'];
+    if (chartInstance) chartInstance.destroy();
+    chartInstance = new Chart(document.getElementById('top3Chart'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{ data: values, backgroundColor: colors, borderRadius: 6, borderSkipped: false }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ' ' + ctx.parsed.x.toFixed(1) + '% confidence' } }
+            },
+            scales: {
+                x: { max: 100, ticks: { callback: v => v + '%', font: { size: 11 } }, grid: { color: '#f1f5f9' } },
+                y: { ticks: { font: { size: 12, weight: '600' } }, grid: { display: false } }
+            }
+        }
+    });
+
+    // Info grid
+    document.getElementById('infoGrid').innerHTML = `
+        <div class="info-box full">
+            <div class="info-box-label"><i class="fas fa-file-medical"></i> Description</div>
+            <div class="info-box-text">${esc(data.description || 'No information available.')}</div>
+        </div>
+        <div class="info-box">
+            <div class="info-box-label"><i class="fas fa-virus"></i> Cause</div>
+            <div class="info-box-text">${esc(data.cause || 'Unknown.')}</div>
+        </div>
+        <div class="info-box">
+            <div class="info-box-label"><i class="fas fa-notes-medical"></i> Recommendations</div>
+            <div class="info-box-text">${esc(data.recommendations || 'Consult a dermatologist.')}</div>
+        </div>
+        <div class="info-box danger full">
+            <div class="info-box-label"><i class="fas fa-triangle-exclamation"></i> Precautions</div>
+            <div class="info-box-text">${esc(data.precautions || 'Use sun protection and monitor for changes.')}</div>
+        </div>
+    `;
+
+    // Actions
+    document.getElementById('resultActions').innerHTML = `
+        <a href="${mapsUrl}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">
+            <i class="fas fa-map-location-dot"></i> Find Dermatologist
+        </a>
+        <a href="${searchUrl}" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
+            <i class="fas fa-magnifying-glass"></i> Research Online
+        </a>
+        <button class="btn btn-ghost btn-sm" onclick="reset()">
+            <i class="fas fa-rotate-left"></i> Analyze Another
+        </button>
+    `;
+
+    placeholder.style.display = 'none';
+    resultWrap.classList.add('show');
+    analyzeBtn.style.display = 'block';
+
+    // Animate confidence bar
+    setTimeout(() => {
+        const fill = document.getElementById('confBarFill');
+        if (fill) fill.style.width = conf.toFixed(1) + '%';
+    }, 80);
+}
+
+function reset() {
+    selectedFile = null;
+    fileInput.value = '';
+    previewImg.src = '';
+    previewWrap.style.display = 'none';
+    uploadZone.style.display = 'block';
+    analyzeBtn.style.display = 'none';
+    analyzeBtn.disabled = false;
+    loadingWrap.style.display = 'none';
+    resultWrap.classList.remove('show');
+    placeholder.style.display = 'flex';
+    if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+    // Reset loading steps
+    ['ls1','ls2','ls3','ls4'].forEach((id, i) => {
+        const el = document.getElementById(id);
+        el.classList.remove('active','done');
+        if (i === 0) el.classList.add('active');
+        const icons = ['fa-upload','fa-wand-magic-sparkles','fa-brain','fa-chart-bar'];
+        el.querySelector('i').className = 'fas ' + icons[i];
+    });
+}
+</script>
+</body>
+</html>

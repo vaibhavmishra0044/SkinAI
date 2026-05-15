@@ -1,0 +1,635 @@
+﻿{% extends 'base.html' %}
+{% block title %}Skin Detection{% endblock %}
+{% block page_title %}AI Skin Analysis{% endblock %}
+{% block topbar_actions %}
+<a href="{{ url_for('history') }}" class="btn btn-outline btn-sm">
+    <i class="fas fa-clock-rotate-left"></i> My History
+</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.detect-hero {
+    background:
+        linear-gradient(135deg, rgba(7,17,31,.95), rgba(10,38,42,.95)),
+        url("{{ url_for('static', filename='background.jpg') }}");
+    background-size: cover;
+    background-position: center;
+    color:white;
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:8px;
+    padding:clamp(22px,4vw,34px);
+    margin-bottom:22px;
+    display:grid;
+    grid-template-columns:minmax(0,1.1fr) minmax(280px,.75fr);
+    gap:22px;
+    align-items:center;
+    overflow:hidden;
+    position:relative;
+    box-shadow:0 26px 80px rgba(7,17,31,.20);
+}
+.detect-hero::before {
+    content:"";
+    position:absolute; inset:0;
+    background-image:
+        linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255,255,255,.05) 1px, transparent 1px);
+    background-size:44px 44px;
+    opacity:.75;
+}
+.detect-hero-copy,
+.detect-hero-panel { position:relative; z-index:1; min-width:0; }
+.detect-eyebrow {
+    display:inline-flex; align-items:center; gap:8px;
+    padding:6px 11px;
+    border-radius:999px;
+    background:rgba(20,184,166,.16);
+    color:#99f6e4;
+    border:1px solid rgba(153,246,228,.24);
+    font-size:12px;
+    font-weight:800;
+}
+.detect-hero h2 {
+    font-size:clamp(30px,4vw,50px);
+    line-height:1.03;
+    letter-spacing:0;
+    margin:14px 0 12px;
+}
+.detect-hero p {
+    color:rgba(255,255,255,.76);
+    line-height:1.65;
+    max-width:680px;
+    font-size:15px;
+}
+.detect-hero-chips {
+    display:flex; gap:9px; flex-wrap:wrap; margin-top:18px;
+}
+.detect-hero-chips span {
+    display:inline-flex; align-items:center; gap:7px;
+    padding:7px 11px;
+    border-radius:999px;
+    background:rgba(255,255,255,.09);
+    border:1px solid rgba(255,255,255,.12);
+    color:rgba(255,255,255,.78);
+    font-size:12px;
+    font-weight:700;
+}
+.detect-hero-panel {
+    border:1px solid rgba(255,255,255,.16);
+    background:rgba(255,255,255,.1);
+    backdrop-filter:blur(16px);
+    border-radius:8px;
+    padding:16px;
+}
+.angle-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.angle-card {
+    min-height:86px;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,.14);
+    background:
+        linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255,255,255,.08) 1px, transparent 1px),
+        rgba(7,17,31,.38);
+    background-size:22px 22px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    gap:7px;
+    color:rgba(255,255,255,.74);
+    font-size:11px;
+    font-weight:800;
+}
+.angle-card i { color:#5eead4; font-size:20px; }
+.hero-quality {
+    display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;
+}
+.quality-item {
+    padding:10px;
+    border-radius:8px;
+    background:rgba(255,255,255,.1);
+    border:1px solid rgba(255,255,255,.12);
+}
+.quality-item small { display:block; color:rgba(255,255,255,.58); font-size:11px; font-weight:700; }
+.quality-item strong { display:block; color:white; margin-top:4px; font-size:18px; }
+
+.detect-layout { display:grid; grid-template-columns:minmax(340px,400px) 1fr; gap:22px; align-items:start; }
+@media(max-width:1000px){ .detect-layout{ grid-template-columns:1fr; } }
+@media(max-width:900px){ .detect-hero{ grid-template-columns:1fr; } }
+@media(max-width:520px){ .angle-grid,.hero-quality{ grid-template-columns:1fr; } }
+
+/* Upload */
+.upload-zone {
+    border:2px dashed rgba(15,118,110,.26); border-radius:8px;
+    padding:54px 20px; text-align:center; cursor:pointer;
+    transition:all .2s; background:
+        linear-gradient(180deg, rgba(204,251,241,.45), rgba(248,250,252,.9));
+    position:relative;
+    overflow:hidden;
+}
+.upload-zone::before {
+    content:"";
+    position:absolute; inset:14px;
+    border:1px solid rgba(15,118,110,.10);
+    border-radius:8px;
+    pointer-events:none;
+}
+.upload-zone:hover, .upload-zone.dragover {
+    border-color:#14b8a6; background:var(--primary-light);
+    transform:translateY(-2px);
+}
+.upload-zone i { font-size:44px; color:var(--primary); display:block; margin-bottom:14px; }
+.upload-zone:hover i, .upload-zone.dragover i { color:var(--primary); }
+.upload-title { font-size:16px; font-weight:800; color:var(--gray-800); }
+.upload-hint  { font-size:13px; color:var(--gray-400); margin-top:4px; }
+
+#fileInput { display:none; }
+
+#previewWrap { display:none; }
+#previewImg  { width:100%; border-radius:10px; border:2px solid var(--gray-200); max-height:300px; object-fit:contain; background:var(--gray-50); }
+.file-info   { font-size:12px; color:var(--gray-400); font-weight:600; text-align:center; margin-top:6px; }
+
+.btn-analyze {
+    display:none; width:100%; padding:15px;
+    background:linear-gradient(135deg, #14b8a6, #0f766e);
+    color:white; border:none; border-radius:12px;
+    font-size:15px; font-weight:700; font-family:inherit;
+    cursor:pointer; margin-top:14px; transition:all .2s;
+    box-shadow:0 4px 14px rgba(14,165,233,.35);
+}
+.btn-analyze:hover { transform:translateY(-2px); box-shadow:0 8px 22px rgba(14,165,233,.4); }
+.btn-analyze:disabled { opacity:.5; cursor:not-allowed; transform:none; box-shadow:none; }
+
+#loadingWrap { display:none; text-align:center; padding:40px 16px; }
+.spinner {
+    width:56px; height:56px;
+    border:4px solid var(--gray-200); border-top-color:var(--primary);
+    border-radius:50%; animation:spin .75s linear infinite;
+    margin:0 auto 16px;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+.loading-steps { margin-top:14px; text-align:left; display:inline-block; }
+.loading-step {
+    display:flex; align-items:center; gap:10px;
+    font-size:13px; color:var(--gray-400); padding:4px 0;
+    transition:color .3s;
+}
+.loading-step.active { color:var(--primary); font-weight:600; }
+.loading-step.done { color:var(--success); }
+.loading-step i { font-size:13px; width:16px; text-align:center; }
+
+/* Results */
+#resultWrap { display:none; }
+#resultWrap.show { display:block; animation:fadeUp .4s ease; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px);} to{opacity:1;transform:translateY(0);} }
+
+.result-card { background:white; border:1px solid var(--gray-200); border-radius:14px; overflow:hidden; box-shadow:var(--shadow-md); }
+
+.result-header { padding:24px; }
+.result-badge { display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+.result-name  { font-size:26px; font-weight:900; color:var(--gray-900); letter-spacing:-.5px; margin-bottom:10px; }
+.risk-chip {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:5px 14px; border-radius:20px;
+    font-size:13px; font-weight:700;
+}
+.conf-chip {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:5px 14px; border-radius:20px;
+    font-size:13px; font-weight:700;
+    background:var(--gray-100); color:var(--gray-700);
+}
+.icd-chip {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:5px 12px; border-radius:20px;
+    font-size:12px; font-weight:600;
+    background:#f1f5f9; color:var(--gray-500);
+}
+
+.conf-bar-wrap { margin-top:12px; }
+.conf-bar-label { display:flex; justify-content:space-between; font-size:12px; color:var(--gray-500); margin-bottom:5px; }
+.conf-bar-bg { height:10px; background:var(--gray-100); border-radius:5px; overflow:hidden; }
+.conf-bar-fill { height:100%; border-radius:5px; transition:width 1s ease; }
+
+.low-conf-alert {
+    margin:0 24px; padding:11px 14px;
+    background:#fffbeb; border:1px solid #fde68a; border-radius:9px;
+    font-size:13px; color:#92400e; display:flex; align-items:center; gap:8px;
+}
+
+.chart-section { padding:16px 24px; border-top:1px solid var(--gray-100); }
+.section-title { font-size:13px; font-weight:700; color:var(--gray-500); text-transform:uppercase; letter-spacing:.06em; margin-bottom:12px; }
+canvas#top3Chart { max-height:140px; }
+
+.info-section { padding:16px 24px; border-top:1px solid var(--gray-100); }
+.info-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+@media(max-width:600px){ .info-grid{ grid-template-columns:1fr; } }
+.info-box { background:var(--gray-50); border:1px solid var(--gray-200); border-radius:10px; padding:14px; }
+.info-box.full { grid-column:1/-1; }
+.info-box.danger { background:#fff0f0; border-color:#fecaca; }
+.info-box-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--gray-400); margin-bottom:6px; }
+.info-box.danger .info-box-label { color:#dc2626; }
+.info-box-text  { font-size:13px; line-height:1.7; color:var(--gray-700); }
+.info-box.danger .info-box-text { color:#991b1b; }
+
+.disclaimer {
+    margin:0 24px 16px; padding:12px 14px;
+    background:#f0f9ff; border:1px solid #bae6fd; border-radius:9px;
+    font-size:12px; color:#075985; line-height:1.6;
+}
+
+.result-actions { padding:16px 24px; border-top:1px solid var(--gray-100); display:flex; gap:8px; flex-wrap:wrap; }
+
+#placeholder {
+    background:
+        linear-gradient(180deg, rgba(255,255,255,.92), rgba(248,250,252,.88));
+    border:1px solid rgba(148,163,184,.24);
+    border-radius:8px; padding:72px 24px; text-align:center;
+    box-shadow:var(--shadow);
+    min-height:460px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+}
+#placeholder i { font-size:64px; color:var(--primary); opacity:.24; margin-bottom:18px; display:block; }
+#placeholder h3 { font-size:22px; font-weight:900; color:var(--gray-800); margin-bottom:6px; }
+#placeholder p  { font-size:14px; color:var(--gray-500); max-width:380px; line-height:1.6; }
+
+.upload-tips { margin-top:14px; }
+.upload-tip {
+    display:flex; align-items:center; gap:8px;
+    font-size:12px; color:var(--gray-500); padding:4px 0;
+}
+.upload-tip i { color:var(--success); font-size:11px; }
+.result-card { border-radius:8px; border-color:rgba(148,163,184,.24); }
+.result-header {
+    background:
+        linear-gradient(135deg, rgba(204,251,241,.58), rgba(255,237,213,.42));
+}
+.info-box { border-radius:8px; background:rgba(248,250,252,.86); }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="detect-hero">
+    <div class="detect-hero-copy">
+        <span class="detect-eyebrow"><i class="fas fa-wand-magic-sparkles"></i> AI image analysis</span>
+        <h2>Upload once. Get a focused skin assessment in seconds.</h2>
+        <p>
+            The model checks the image, ranks the top predictions, and gives you risk context,
+            recommendations, and next-step links without clutter.
+        </p>
+        <div class="detect-hero-chips">
+            <span><i class="fas fa-camera"></i> Clear close-up image</span>
+            <span><i class="fas fa-chart-simple"></i> Top-3 prediction chart</span>
+            <span><i class="fas fa-user-doctor"></i> Dermatologist follow-up</span>
+        </div>
+    </div>
+    <div class="detect-hero-panel" aria-hidden="true">
+        <div class="angle-grid">
+            <div class="angle-card"><i class="fas fa-crosshairs"></i> Focus</div>
+            <div class="angle-card"><i class="fas fa-sun"></i> Light</div>
+            <div class="angle-card"><i class="fas fa-shield-virus"></i> Risk</div>
+        </div>
+        <div class="hero-quality">
+            <div class="quality-item"><small>Classes</small><strong>7</strong></div>
+            <div class="quality-item"><small>File limit</small><strong>10 MB</strong></div>
+        </div>
+    </div>
+</section>
+
+<div class="detect-layout">
+
+    <!-- Left: Upload Panel -->
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-upload" style="color:var(--primary);margin-right:8px;"></i> Upload Skin Image</h3>
+            </div>
+            <div class="card-body">
+                <!-- Upload Zone -->
+                <div class="upload-zone" id="uploadZone">
+                    <i class="fas fa-cloud-arrow-up"></i>
+                    <div class="upload-title">Click to upload or drag & drop</div>
+                    <div class="upload-hint">JPG, PNG, WebP &mdash; Max 10 MB</div>
+                    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp">
+                </div>
+
+                <!-- Preview -->
+                <div id="previewWrap" style="margin-top:14px;">
+                    <img id="previewImg" alt="Preview">
+                    <div class="file-info" id="fileInfo"></div>
+                </div>
+
+                <!-- Analyze Button -->
+                <button id="analyzeBtn" class="btn-analyze" type="button">
+                    <i class="fas fa-brain"></i> Analyze Skin Image
+                </button>
+
+                <!-- Loading -->
+                <div id="loadingWrap">
+                    <div class="spinner"></div>
+                    <div class="loading-steps">
+                        <div class="loading-step active" id="ls1"><i class="fas fa-upload"></i> Reading image...</div>
+                        <div class="loading-step" id="ls2"><i class="fas fa-wand-magic-sparkles"></i> Preprocessing...</div>
+                        <div class="loading-step" id="ls3"><i class="fas fa-brain"></i> Running CNN model...</div>
+                        <div class="loading-step" id="ls4"><i class="fas fa-chart-bar"></i> Computing results...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tips -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-lightbulb" style="color:var(--warning);margin-right:8px;"></i> Tips for Best Results</h3>
+            </div>
+            <div class="card-body" style="padding:14px 20px;">
+                <div class="upload-tips">
+                    <div class="upload-tip"><i class="fas fa-check-circle"></i> Use a clear, close-up dermoscopic photo</div>
+                    <div class="upload-tip"><i class="fas fa-check-circle"></i> Good lighting &mdash; avoid shadows or glare</div>
+                    <div class="upload-tip"><i class="fas fa-check-circle"></i> Focus on the affected skin area only</div>
+                    <div class="upload-tip"><i class="fas fa-check-circle"></i> Avoid blurry or low-resolution images</div>
+                    <div class="upload-tip"><i class="fas fa-check-circle"></i> No filters, cropping is fine</div>
+                </div>
+                <div style="margin-top:12px;font-size:12px;color:var(--gray-400);border-top:1px solid var(--gray-100);padding-top:10px;">
+                    <i class="fas fa-info-circle"></i>
+                    Model trained on the HAM10000 dataset (10,015 dermoscopic images, 7 classes).
+                    Best accuracy on dermoscopic-quality images.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Results Panel -->
+    <div>
+        <!-- Placeholder -->
+        <div id="placeholder">
+            <i class="fas fa-magnifying-glass-plus"></i>
+            <h3>Ready to Analyze</h3>
+            <p>Upload a skin image on the left and click "Analyze" to get your AI-powered diagnosis</p>
+        </div>
+
+        <!-- Result (shown after analysis) -->
+        <div id="resultWrap">
+            <div class="result-card">
+                <div class="result-header" id="resultHeader"></div>
+                <div id="lowConfAlert" class="low-conf-alert" style="display:none;margin-bottom:12px;">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    <div><strong>Low confidence:</strong> The model is uncertain. This may not be a dermoscopic image, or the condition may present atypically. Always consult a dermatologist.</div>
+                </div>
+                <div class="chart-section">
+                    <div class="section-title"><i class="fas fa-chart-bar"></i> Top 3 Predictions</div>
+                    <canvas id="top3Chart"></canvas>
+                </div>
+                <div class="info-section">
+                    <div class="section-title"><i class="fas fa-file-medical"></i> Condition Details</div>
+                    <div class="info-grid" id="infoGrid"></div>
+                </div>
+                <div class="disclaimer">
+                    <i class="fas fa-circle-info"></i>
+                    <strong>Medical Disclaimer:</strong> This AI tool is for educational purposes only.
+                    It is <strong>not a medical diagnosis</strong>. Always consult a qualified dermatologist or
+                    healthcare provider for proper diagnosis and treatment.
+                </div>
+                <div class="result-actions" id="resultActions"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const uploadZone = document.getElementById('uploadZone');
+const fileInput  = document.getElementById('fileInput');
+const previewWrap= document.getElementById('previewWrap');
+const previewImg = document.getElementById('previewImg');
+const fileInfo   = document.getElementById('fileInfo');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const loadingWrap= document.getElementById('loadingWrap');
+const placeholder= document.getElementById('placeholder');
+const resultWrap = document.getElementById('resultWrap');
+let selectedFile = null;
+let chartInstance = null;
+
+/* â”€â”€ Drag-and-drop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+uploadZone.addEventListener('click', () => fileInput.click());
+uploadZone.addEventListener('dragover',  e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', ()=> uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; handleFile(); }
+});
+fileInput.addEventListener('change', handleFile);
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function handleFile() {
+    selectedFile = fileInput.files[0];
+    if (!selectedFile) return;
+    const allowed = ['image/jpeg','image/png','image/webp'];
+    if (!allowed.includes(selectedFile.type)) {
+        alert('Please upload a JPG, PNG, or WebP image.');
+        fileInput.value = ''; selectedFile = null; return;
+    }
+    if (selectedFile.size > 10 * 1024 * 1024) {
+        alert('File is too large. Maximum size is 10 MB.');
+        fileInput.value = ''; selectedFile = null; return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+        previewImg.src = e.target.result;
+        const mb = (selectedFile.size / (1024 * 1024)).toFixed(2);
+        fileInfo.innerHTML = esc(selectedFile.name) + ' &mdash; ' + mb + ' MB';
+        previewWrap.style.display = 'block';
+        uploadZone.style.display = 'none';
+        analyzeBtn.style.display = 'block';
+        resultWrap.classList.remove('show');
+        placeholder.style.display = 'block';
+    };
+    reader.readAsDataURL(selectedFile);
+}
+
+/* â”€â”€ Analyze â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+analyzeBtn.addEventListener('click', async () => {
+    if (!selectedFile) return;
+    const fd = new FormData();
+    fd.append('file', selectedFile);
+    analyzeBtn.disabled = true;
+    loadingWrap.style.display = 'block';
+    analyzeBtn.style.display = 'none';
+    placeholder.style.display = 'none';
+    resultWrap.classList.remove('show');
+
+    // Animate loading steps
+    const steps = ['ls1','ls2','ls3','ls4'];
+    let stepIdx = 0;
+    function nextStep() {
+        if (stepIdx > 0) {
+            document.getElementById(steps[stepIdx-1]).classList.remove('active');
+            document.getElementById(steps[stepIdx-1]).classList.add('done');
+            document.getElementById(steps[stepIdx-1]).querySelector('i').className = 'fas fa-check-circle';
+        }
+        if (stepIdx < steps.length) {
+            document.getElementById(steps[stepIdx]).classList.add('active');
+            stepIdx++;
+        }
+    }
+    nextStep();
+    const stepTimer1 = setTimeout(nextStep, 600);
+    const stepTimer2 = setTimeout(nextStep, 1200);
+    const stepTimer3 = setTimeout(nextStep, 1800);
+
+    try {
+        const resp = await fetch('/predict', { method:'POST', body:fd });
+        const data = await resp.json();
+        if (!resp.ok) { alert(data.error || 'Prediction failed.'); reset(); return; }
+        showResult(data);
+    } catch(err) {
+        alert('Network error: ' + (err.message || 'Please try again.'));
+        reset();
+    } finally {
+        clearTimeout(stepTimer1); clearTimeout(stepTimer2); clearTimeout(stepTimer3);
+        loadingWrap.style.display = 'none';
+        analyzeBtn.disabled = false;
+    }
+});
+
+function riskStyle(risk) {
+    const map = {
+        'Low':       { bg:'#dcfce7', color:'#166534' },
+        'Moderate':  { bg:'#fef3c7', color:'#92400e' },
+        'High':      { bg:'#ffedd5', color:'#9a3412' },
+        'Very High': { bg:'#fee2e2', color:'#991b1b' },
+    };
+    return map[risk] || { bg:'#f1f5f9', color:'#475569' };
+}
+function confColor(c) {
+    if (c >= 75) return ['#22c55e','#dcfce7'];
+    if (c >= 50) return ['#f59e0b','#fef3c7'];
+    return ['#ef4444','#fee2e2'];
+}
+
+function showResult(data) {
+    const conf  = typeof data.confidence === 'number' ? data.confidence : 0;
+    const risk  = data.risk_level || 'Unknown';
+    const icd   = data.icd || 'N/A';
+    const rs    = riskStyle(risk);
+    const [cc, cbg] = confColor(conf);
+    const top3  = data.top3 || [];
+    const searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent((data.predicted_class||'') + ' skin condition treatment');
+    const mapsUrl   = 'https://www.google.com/maps/search/dermatologist+near+me';
+
+    /* Header */
+    document.getElementById('resultHeader').innerHTML = `
+        <div class="result-badge">
+            <span class="risk-chip" style="background:${rs.bg};color:${rs.color};">
+                <i class="fas fa-shield-virus"></i> ${esc(risk)} Risk
+            </span>
+            <span class="conf-chip">
+                <i class="fas fa-percent"></i> ${conf.toFixed(1)}% Confidence
+            </span>
+            <span class="icd-chip">ICD: ${esc(icd)}</span>
+        </div>
+        <div class="result-name">${esc(data.predicted_class || 'Unknown Condition')}</div>
+        <div class="conf-bar-wrap">
+            <div class="conf-bar-label"><span>Model Confidence</span><span>${conf.toFixed(1)}%</span></div>
+            <div class="conf-bar-bg">
+                <div class="conf-bar-fill" id="confBarFill" style="width:0%;background:${cc};transition:width 1.2s cubic-bezier(.4,0,.2,1);"></div>
+            </div>
+        </div>
+    `;
+
+    /* Low confidence alert */
+    const alertEl = document.getElementById('lowConfAlert');
+    alertEl.style.display = conf < 50 ? 'flex' : 'none';
+
+    /* Chart */
+    const labels = top3.map(p => p.class_name);
+    const values = top3.map(p => p.confidence);
+    const colors = [cc, '#94a3b8', '#cbd5e1'];
+    if (chartInstance) chartInstance.destroy();
+    chartInstance = new Chart(document.getElementById('top3Chart'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{ data: values, backgroundColor: colors, borderRadius: 6, borderSkipped: false }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: { label: ctx => ' ' + ctx.parsed.x.toFixed(1) + '% confidence' }
+                }
+            },
+            scales: {
+                x: { max: 100, ticks: { callback: v => v + '%', font: { size: 11 } }, grid: { color: '#f1f5f9' } },
+                y: { ticks: { font: { size: 12, weight: '600' } }, grid: { display: false } }
+            }
+        }
+    });
+
+    /* Info Grid */
+    document.getElementById('infoGrid').innerHTML = `
+        <div class="info-box full">
+            <div class="info-box-label"><i class="fas fa-file-medical"></i> Description</div>
+            <div class="info-box-text">${esc(data.description || 'No information available.')}</div>
+        </div>
+        <div class="info-box">
+            <div class="info-box-label"><i class="fas fa-virus"></i> Cause</div>
+            <div class="info-box-text">${esc(data.cause || 'Unknown.')}</div>
+        </div>
+        <div class="info-box">
+            <div class="info-box-label"><i class="fas fa-notes-medical"></i> Recommendations</div>
+            <div class="info-box-text">${esc(data.recommendations || 'Consult a dermatologist.')}</div>
+        </div>
+        <div class="info-box danger full">
+            <div class="info-box-label"><i class="fas fa-triangle-exclamation"></i> Precautions</div>
+            <div class="info-box-text">${esc(data.precautions || 'Use sun protection and monitor for changes.')}</div>
+        </div>
+    `;
+
+    /* Actions */
+    document.getElementById('resultActions').innerHTML = `
+        <a href="${mapsUrl}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">
+            <i class="fas fa-map-location-dot"></i> Find Dermatologist
+        </a>
+        <a href="${searchUrl}" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
+            <i class="fas fa-magnifying-glass"></i> Research Online
+        </a>
+        <button class="btn btn-ghost btn-sm" onclick="reset()">
+            <i class="fas fa-rotate-left"></i> Analyze Another
+        </button>
+    `;
+
+    resultWrap.classList.add('show');
+    analyzeBtn.style.display = 'block';
+    // Animate confidence bar after DOM paint
+    setTimeout(() => {
+        const fill = document.getElementById('confBarFill');
+        if (fill) fill.style.width = conf.toFixed(1) + '%';
+    }, 80);
+}
+
+function reset() {
+    selectedFile = null;
+    fileInput.value = '';
+    previewImg.src = '';
+    previewWrap.style.display = 'none';
+    uploadZone.style.display = 'block';
+    analyzeBtn.style.display = 'none';
+    analyzeBtn.disabled = false;
+    loadingWrap.style.display = 'none';
+    resultWrap.classList.remove('show');
+    placeholder.style.display = 'block';
+    if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+}
+</script>
+{% endblock %}

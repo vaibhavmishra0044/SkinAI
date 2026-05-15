@@ -1,0 +1,39 @@
+{
+  "image_size": [
+    224,
+    224
+  ],
+  "backbone": "efficientnetv2b0",
+  "dataset": "HAM10000",
+  "num_classes": 7,
+  "class_names": [
+    "actinic_keratoses",
+    "basal_cell_carcinoma",
+    "benign_keratosis_like_lesions",
+    "dermatofibroma",
+    "melanoma",
+    "melanocytic_nevi",
+    "vascular_lesions"
+  ],
+  "preprocessing": "preprocess_input (efficientnet_v2) scales [0,255]->[-1,1]",
+  "resize_method": "tf.image.resize bilinear",
+  "training_strategy": "feature_extraction + head (backbone frozen)",
+  "oversampling_min": 1500,
+  "label_smoothing": 0.1,
+  "test_accuracy_pct": 75.82,
+  "test_top3_accuracy_pct": 96.72,
+  "per_class_accuracy_pct": {
+    "actinic_keratoses": 45.45,
+    "basal_cell_carcinoma": 59.62,
+    "benign_keratosis_like_lesions": 70.0,
+    "dermatofibroma": 41.67,
+    "melanoma": 59.82,
+    "melanocytic_nevi": 82.71,
+    "vascular_lesions": 80.0
+  },
+  "training_config": {
+    "head_epochs": 200,
+    "feat_batch": 64,
+    "head_batch": 256
+  }
+}

@@ -1,0 +1,365 @@
+﻿{% extends 'base.html' %}
+{% block title %}Admin Panel{% endblock %}
+{% block page_title %}Admin Dashboard{% endblock %}
+{% block topbar_actions %}
+<a href="{{ url_for('scan_page') }}" class="btn btn-primary btn-sm">
+    <i class="fas fa-magnifying-glass-plus"></i> Run Detection
+</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.tabs { display:flex; gap:4px; background:var(--gray-100); padding:4px; border-radius:10px; margin-bottom:20px; flex-wrap:wrap; }
+.tab-btn {
+    flex:1; min-width:120px; padding:9px 14px; border:none;
+    background:transparent; border-radius:7px;
+    font-size:13px; font-weight:600; font-family:inherit;
+    cursor:pointer; color:var(--gray-500); transition:all .15s;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+}
+.tab-btn.active { background:white; color:var(--gray-900); box-shadow:var(--shadow); }
+.tab-panel { display:none; }
+.tab-panel.active { display:block; }
+
+.risk-dot { width:9px; height:9px; border-radius:50%; display:inline-block; margin-right:5px; }
+.risk-low    { background:#22c55e; }
+.risk-moderate{ background:#f59e0b; }
+.risk-high   { background:#f97316; }
+.risk-veryhigh{ background:#ef4444; }
+
+.chart-wrap { max-height:260px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#e0f2fe;color:#0284c7;"><i class="fas fa-users"></i></div>
+        <div class="stat-value">{{ total_users }}</div>
+        <div class="stat-label">Registered Users</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#dcfce7;color:#16a34a;"><i class="fas fa-user-md"></i></div>
+        <div class="stat-value">{{ total_doctors }}</div>
+        <div class="stat-label">Total Doctors</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#ede9fe;color:#7c3aed;"><i class="fas fa-microscope"></i></div>
+        <div class="stat-value">{{ total_predictions }}</div>
+        <div class="stat-label">Total Scans</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#fef3c7;color:#d97706;"><i class="fas fa-comment-dots"></i></div>
+        <div class="stat-value">{{ total_feedback }}</div>
+        <div class="stat-label">Feedbacks</div>
+    </div>
+</div>
+
+<!-- Overview Charts Row -->
+{% if total_predictions > 0 %}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+    <div class="card" style="margin-bottom:0;">
+        <div class="card-header"><h3><i class="fas fa-chart-pie" style="color:var(--accent);margin-right:8px;"></i> Prediction Distribution</h3></div>
+        <div class="card-body"><div class="chart-wrap"><canvas id="distChart"></canvas></div></div>
+    </div>
+    <div class="card" style="margin-bottom:0;">
+        <div class="card-header"><h3><i class="fas fa-chart-bar" style="color:var(--primary);margin-right:8px;"></i> Condition Counts</h3></div>
+        <div class="card-body"><div class="chart-wrap"><canvas id="barChart"></canvas></div></div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Tabs -->
+<div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('doctors', this)"><i class="fas fa-user-md"></i> Doctors ({{ doctors|length }})</button>
+    <button class="tab-btn" onclick="switchTab('users', this)"><i class="fas fa-users"></i> Users ({{ total_users }})</button>
+    <button class="tab-btn" onclick="switchTab('predictions', this)"><i class="fas fa-microscope"></i> Scans ({{ total_predictions }})</button>
+    <button class="tab-btn" onclick="switchTab('feedbacks', this)"><i class="fas fa-comment-dots"></i> Feedbacks ({{ total_feedback }})</button>
+</div>
+
+<!-- â”€â”€â”€ Doctors Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<div class="tab-panel active" id="tab-doctors">
+    <div class="card" style="margin-bottom:0;">
+        <div class="card-header">
+            <h3><i class="fas fa-user-md" style="color:var(--primary);margin-right:8px;"></i> Manage Doctors</h3>
+            <button class="btn btn-primary btn-sm" onclick="openModal('addModal')">
+                <i class="fas fa-plus"></i> Add Doctor
+            </button>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>#</th><th>Name</th><th>Specialization</th><th>Phone</th><th>Email</th><th>Hospital</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>
+                {% for d in doctors %}
+                <tr>
+                    <td style="color:var(--gray-400);">{{ d.id }}</td>
+                    <td style="font-weight:700;color:var(--gray-900);">Dr. {{ d.name }}</td>
+                    <td><span class="badge badge-user">{{ d.specialization }}</span></td>
+                    <td>{{ d.phone }}</td>
+                    <td>{{ d.email or '&mdash;' }}</td>
+                    <td>{{ d.hospital or '&mdash;' }}</td>
+                    <td>
+                        {% if d.available %}
+                        <span style="color:#16a34a;font-size:12px;font-weight:600;"><span class="risk-dot risk-low"></span>Available</span>
+                        {% else %}
+                        <span style="color:#ef4444;font-size:12px;font-weight:600;"><span class="risk-dot risk-veryhigh"></span>Unavailable</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display:flex;gap:6px;">
+                            <button class="btn btn-outline btn-xs"
+                                onclick="editDoctor({{ d.id }},'{{ d.name|e }}','{{ d.specialization|e }}','{{ d.phone|e }}','{{ d.email|e }}','{{ d.hospital|e }}',{{ 'true' if d.available else 'false' }})">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <form action="{{ url_for('delete_doctor', doctor_id=d.id) }}" method="POST" style="display:inline;"
+                                onsubmit="return confirm('Remove Dr. {{ d.name }}?')">
+                                <button type="submit" class="btn btn-danger btn-xs"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8"><div class="empty-state"><i class="fas fa-user-md"></i><h4>No doctors yet</h4><p>Click "Add Doctor" to get started</p></div></td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- â”€â”€â”€ Users Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<div class="tab-panel" id="tab-users">
+    <div class="card" style="margin-bottom:0;">
+        <div class="card-header">
+            <h3><i class="fas fa-users" style="color:var(--accent);margin-right:8px;"></i> Registered Users</h3>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>#</th><th>Username</th><th>Email</th><th>Role</th><th>Joined</th><th>Scans</th><th>Actions</th></tr></thead>
+                <tbody>
+                {% for u in users %}
+                <tr>
+                    <td style="color:var(--gray-400);">{{ u.id }}</td>
+                    <td style="font-weight:700;color:var(--gray-900);">{{ u.username }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>
+                        {% if u.is_admin %}
+                        <span class="badge badge-admin"><i class="fas fa-crown" style="margin-right:4px;font-size:10px;"></i> Admin</span>
+                        {% else %}
+                        <span class="badge badge-user"><i class="fas fa-user" style="margin-right:4px;font-size:10px;"></i> User</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:12px;color:var(--gray-400);">{{ u.created_at.strftime('%b %d, %Y') if u.created_at else '&mdash;' }}</td>
+                    <td style="font-weight:600;">{{ u.predictions|length }}</td>
+                    <td>
+                        {% if not u.is_admin %}
+                        <form action="{{ url_for('delete_user', user_id=u.id) }}" method="POST" style="display:inline;"
+                            onsubmit="return confirm('Delete user {{ u.username }}? This will also delete their scans and feedback.')">
+                            <button type="submit" class="btn btn-danger btn-xs"><i class="fas fa-trash"></i> Delete</button>
+                        </form>
+                        {% else %}
+                        <span style="font-size:12px;color:var(--gray-400);">Protected</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- â”€â”€â”€ Predictions Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<div class="tab-panel" id="tab-predictions">
+    <div class="card" style="margin-bottom:0;">
+        <div class="card-header">
+            <h3><i class="fas fa-microscope" style="color:var(--primary);margin-right:8px;"></i> All Scan Records</h3>
+            <span style="font-size:13px;color:var(--gray-400);">Last 100 scans</span>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>#</th><th>User</th><th>Condition</th><th>Confidence</th><th>Risk</th><th>Date</th><th>Actions</th></tr></thead>
+                <tbody>
+                {% for p in predictions %}
+                {% set risk_classes = {'Low':'badge-low','Moderate':'badge-moderate','High':'badge-high','Very High':'badge-veryhigh'} %}
+                <tr>
+                    <td style="color:var(--gray-400);">{{ p.id }}</td>
+                    <td style="font-weight:600;">{{ p.user.username }}</td>
+                    <td style="font-weight:600;color:var(--gray-900);">{{ p.predicted_class }}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="width:60px;height:6px;background:var(--gray-100);border-radius:3px;overflow:hidden;">
+                                <div style="height:100%;width:{{ p.confidence|round(0)|int }}%;background:{% if p.confidence >= 75 %}#22c55e{% elif p.confidence >= 50 %}#f59e0b{% else %}#ef4444{% endif %};border-radius:3px;"></div>
+                            </div>
+                            <span style="font-weight:700;font-size:13px;">{{ p.confidence|round(1) }}%</span>
+                        </div>
+                    </td>
+                    <td><span class="badge {{ risk_classes.get(p.risk_level,'badge-user') }}">{{ p.risk_level }}</span></td>
+                    <td style="font-size:12px;color:var(--gray-400);">{{ p.created_at.strftime('%b %d, %Y %H:%M') }}</td>
+                    <td>
+                        <form action="{{ url_for('delete_prediction', pred_id=p.id) }}" method="POST" style="display:inline;"
+                            onsubmit="return confirm('Delete this scan record?')">
+                            <button type="submit" class="btn btn-danger btn-xs"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7"><div class="empty-state"><i class="fas fa-microscope"></i><h4>No scans yet</h4><p>User predictions will appear here</p></div></td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- â”€â”€â”€ Feedbacks Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<div class="tab-panel" id="tab-feedbacks">
+    <div class="card" style="margin-bottom:0;">
+        <div class="card-header">
+            <h3><i class="fas fa-comment-dots" style="color:var(--warning);margin-right:8px;"></i> User Feedbacks</h3>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>#</th><th>User</th><th>Rating</th><th>Feedback</th><th>Date</th><th>Actions</th></tr></thead>
+                <tbody>
+                {% for fb in feedbacks %}
+                <tr>
+                    <td style="color:var(--gray-400);">{{ fb.id }}</td>
+                    <td style="font-weight:600;">{{ fb.author.username }}</td>
+                    <td>
+                        {% for i in range(5) %}
+                        <span style="color:{% if i < fb.rating %}#f59e0b{% else %}#e2e8f0{% endif %};">&#9733;</span>
+                        {% endfor %}
+                    </td>
+                    <td style="max-width:380px;font-size:13px;">{{ fb.content }}</td>
+                    <td style="font-size:12px;color:var(--gray-400);">{{ fb.created_at.strftime('%b %d, %Y') if fb.created_at else '&mdash;' }}</td>
+                    <td>
+                        <form action="{{ url_for('delete_feedback', fb_id=fb.id) }}" method="POST" style="display:inline;"
+                            onsubmit="return confirm('Delete this feedback?')">
+                            <button type="submit" class="btn btn-danger btn-xs"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6"><div class="empty-state"><i class="fas fa-comment-dots"></i><h4>No feedbacks yet</h4></div></td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- â”€â”€â”€ Add Doctor Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<div class="modal-overlay" id="addModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3><i class="fas fa-user-plus" style="color:var(--primary);margin-right:8px;"></i> Add New Doctor</h3>
+            <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
+        </div>
+        <form action="{{ url_for('add_doctor') }}" method="POST">
+            <div class="form-group"><label class="form-label">Full Name *</label><input type="text" class="form-input" name="name" placeholder="e.g. Sarah Mitchell" required></div>
+            <div class="form-group"><label class="form-label">Specialization *</label><input type="text" class="form-input" name="specialization" placeholder="e.g. Dermatology" required></div>
+            <div class="form-group"><label class="form-label">Phone *</label><input type="text" class="form-input" name="phone" placeholder="+1 (555) 123-4567" required></div>
+            <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" name="email" placeholder="doctor@hospital.com"></div>
+            <div class="form-group"><label class="form-label">Hospital / Clinic</label><input type="text" class="form-input" name="hospital" placeholder="e.g. City Medical Center"></div>
+            <button type="submit" class="btn btn-primary" style="width:100%;margin-top:4px;"><i class="fas fa-plus"></i> Add Doctor</button>
+        </form>
+    </div>
+</div>
+
+<!-- â”€â”€â”€ Edit Doctor Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3><i class="fas fa-pen" style="color:var(--primary);margin-right:8px;"></i> Edit Doctor</h3>
+            <button class="modal-close" onclick="closeModal('editModal')">&times;</button>
+        </div>
+        <form id="editForm" method="POST">
+            <div class="form-group"><label class="form-label">Full Name *</label><input type="text" class="form-input" name="name" id="edit-name" required></div>
+            <div class="form-group"><label class="form-label">Specialization *</label><input type="text" class="form-input" name="specialization" id="edit-spec" required></div>
+            <div class="form-group"><label class="form-label">Phone *</label><input type="text" class="form-input" name="phone" id="edit-phone" required></div>
+            <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" name="email" id="edit-email"></div>
+            <div class="form-group"><label class="form-label">Hospital / Clinic</label><input type="text" class="form-input" name="hospital" id="edit-hospital"></div>
+            <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+                <input type="checkbox" name="available" id="edit-available" style="width:16px;height:16px;">
+                <label for="edit-available" class="form-label" style="margin:0;cursor:pointer;">Available for appointments</label>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;margin-top:4px;"><i class="fas fa-save"></i> Save Changes</button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    function switchTab(name, el) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + name).classList.add('active');
+        el.classList.add('active');
+    }
+
+    function openModal(id)  { document.getElementById(id).classList.add('show'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+    document.querySelectorAll('.modal-overlay').forEach(m => {
+        m.addEventListener('click', e => { if (e.target === m) m.classList.remove('show'); });
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.show').forEach(m => m.classList.remove('show'));
+    });
+
+    function editDoctor(id, name, spec, phone, email, hospital, available) {
+        document.getElementById('editForm').action = '/admin/doctor/update/' + id;
+        document.getElementById('edit-name').value     = name;
+        document.getElementById('edit-spec').value     = spec;
+        document.getElementById('edit-phone').value    = phone;
+        document.getElementById('edit-email').value    = email;
+        document.getElementById('edit-hospital').value = hospital;
+        document.getElementById('edit-available').checked = available;
+        openModal('editModal');
+    }
+
+    /* Charts */
+    const classData = {{ class_counts | safe }};
+    if (Object.keys(classData).length > 0) {
+        const labels = Object.keys(classData);
+        const values = Object.values(classData);
+        const palette = ['#0ea5e9','#8b5cf6','#22c55e','#f59e0b','#ef4444','#06b6d4','#f97316'];
+
+        new Chart(document.getElementById('distChart'), {
+            type: 'doughnut',
+            data: {
+                labels,
+                datasets: [{ data: values, backgroundColor: palette, borderWidth: 2, borderColor: '#fff' }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: true,
+                plugins: {
+                    legend: { position: 'right', labels: { font: { size: 11 }, padding: 12, boxWidth: 12 } }
+                }
+            }
+        });
+
+        new Chart(document.getElementById('barChart'), {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{ label: 'Count', data: values, backgroundColor: palette, borderRadius: 6 }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11 } }, grid: { color: '#f1f5f9' } },
+                    x: { ticks: { font: { size: 10 }, maxRotation: 35 }, grid: { display: false } }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}
