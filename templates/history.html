@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
-{% block title %}Detection History{% endblock %}
-{% block page_title %}My Detection History{% endblock %}
+{% block title %}Scan History{% endblock %}
+{% block page_title %}My Scan History{% endblock %}
 {% block topbar_actions %}
 <a href="{{ url_for('scan_page') }}" class="btn btn-primary btn-sm">
-    <i class="fas fa-magnifying-glass-plus"></i> New Detection
+    <i class="fas fa-magnifying-glass-plus"></i> New Scan
 </a>
 {% endblock %}
 
@@ -46,7 +46,7 @@
     <div class="stat-card">
         <div class="stat-icon" style="background:#fee2e2;color:#dc2626;"><i class="fas fa-triangle-exclamation"></i></div>
         <div class="stat-value">{{ high_risk|length }}</div>
-        <div class="stat-label">High Risk Detections</div>
+        <div class="stat-label">High Risk Flags</div>
     </div>
     {% else %}
     <div class="stat-card">
@@ -62,7 +62,7 @@
     <div class="stat-card">
         <div class="stat-icon" style="background:#fee2e2;color:#dc2626;"><i class="fas fa-triangle-exclamation"></i></div>
         <div class="stat-value">0</div>
-        <div class="stat-label">High Risk Detections</div>
+        <div class="stat-label">High Risk Flags</div>
     </div>
     {% endif %}
 </div>
@@ -85,10 +85,10 @@
                 <tr>
                     <th>#</th>
                     <th>Date &amp; Time</th>
-                    <th>Condition Detected</th>
+                    <th>Suspected Condition</th>
                     <th>Confidence</th>
                     <th>Risk Level</th>
-                    <th>Top Predictions</th>
+                    <th>Top Possible Matches</th>
                 </tr>
             </thead>
             <tbody>
@@ -149,8 +149,8 @@
 {% if preds %}
 <div style="margin-top:12px;padding:12px 16px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;font-size:13px;color:#075985;">
     <i class="fas fa-circle-info"></i>
-    <strong>Medical Disclaimer:</strong> These results are for educational purposes only. All detections should be confirmed by a qualified dermatologist.
-    <a href="{{ url_for('scan_page') }}" style="color:#0284c7;font-weight:600;"> Run new scan →</a>
+    <strong>Medical Disclaimer:</strong> These results are for educational purposes only. All suspected conditions should be confirmed by a qualified dermatologist.
+    <a href="{{ url_for('scan_page') }}" style="color:#0284c7;font-weight:600;"> Run new scan -></a>
 </div>
 {% endif %}
 

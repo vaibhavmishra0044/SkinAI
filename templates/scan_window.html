@@ -641,7 +641,7 @@
             <div class="tip"><i class="fas fa-check-circle"></i> No filters — cropping is fine</div>
             <div class="tips-footer">
                 <i class="fas fa-info-circle"></i>
-                Powered by AI skin disease classification.
+                Open-ended AI skin-condition analysis.
             </div>
         </div>
 
@@ -660,7 +660,7 @@
         <div id="placeholder">
             <i class="fas fa-magnifying-glass-plus"></i>
             <h3>Ready to Analyze</h3>
-            <p>Upload a skin image on the left and click "Analyze with AI" to get an instant AI-powered skin disease assessment.</p>
+            <p>Upload a clear close-up skin image and click "Analyze with AI" to get a suspected condition, alternatives, and safety guidance.</p>
             <div class="placeholder-badge">
                 <i class="fas fa-shield-halved"></i> AI Skin Analysis
             </div>
@@ -679,7 +679,7 @@
                 <hr class="section-divider">
 
                 <div class="chart-section">
-                    <div class="section-title"><i class="fas fa-chart-bar"></i> Top 3 Predictions</div>
+                    <div class="section-title"><i class="fas fa-chart-bar"></i> Top 3 Possible Matches</div>
                     <canvas id="top3Chart"></canvas>
                 </div>
 
@@ -792,7 +792,7 @@ analyzeBtn.addEventListener('click', async () => {
     try {
         const resp = await fetch('/predict', { method: 'POST', body: fd });
         const data = await resp.json();
-        if (!resp.ok) { alert(data.error || 'Prediction failed.'); reset(); return; }
+        if (!resp.ok) { alert(data.error || 'Analysis failed.'); reset(); return; }
         showResult(data);
     } catch (err) {
         alert('Network error: ' + (err.message || 'Please try again.'));
@@ -937,10 +937,10 @@ function showResult(data) {
             <div class="info-box full" style="background:#fef3c7;border-color:#f59e0b;">
                 <div class="info-box-label" style="color:#d97706;"><i class="fas fa-camera"></i> How to get better results</div>
                 <div class="info-box-text">
-                    <strong>1. Get closer</strong> — fill the frame with the affected skin area.<br>
-                    <strong>2. Use good lighting</strong> — natural daylight or a bright lamp, no flash.<br>
-                    <strong>3. Keep steady</strong> — avoid blur by tapping to focus before capturing.<br>
-                    <strong>4. One condition at a time</strong> — isolate the specific area you want analyzed.
+                    <strong>1. Get closer</strong> - fill the frame with the affected skin area.<br>
+                    <strong>2. Use good lighting</strong> - natural daylight or a bright lamp, no flash.<br>
+                    <strong>3. Keep steady</strong> - avoid blur by tapping to focus before capturing.<br>
+                    <strong>4. One condition at a time</strong> - isolate the specific area you want analyzed.
                 </div>
             </div>
             ${detailsHtml}

@@ -277,12 +277,12 @@ canvas#top3Chart { max-height:140px; }
         <span class="detect-eyebrow"><i class="fas fa-wand-magic-sparkles"></i> AI image analysis</span>
         <h2>Upload once. Get a focused skin assessment in seconds.</h2>
         <p>
-            The model checks the image, ranks the top predictions, and gives you risk context,
+            The AI checks the image, ranks possible skin conditions, and gives you risk context,
             recommendations, and next-step links without clutter.
         </p>
         <div class="detect-hero-chips">
             <span><i class="fas fa-camera"></i> Clear close-up image</span>
-            <span><i class="fas fa-chart-simple"></i> Top-3 prediction chart</span>
+            <span><i class="fas fa-chart-simple"></i> Top possible matches</span>
             <span><i class="fas fa-user-doctor"></i> Dermatologist follow-up</span>
         </div>
     </div>
@@ -293,7 +293,7 @@ canvas#top3Chart { max-height:140px; }
             <div class="angle-card"><i class="fas fa-shield-virus"></i> Risk</div>
         </div>
         <div class="hero-quality">
-            <div class="quality-item"><small>Classes</small><strong>7</strong></div>
+            <div class="quality-item"><small>Mode</small><strong>AI</strong></div>
             <div class="quality-item"><small>File limit</small><strong>10 MB</strong></div>
         </div>
     </div>
@@ -368,7 +368,7 @@ canvas#top3Chart { max-height:140px; }
         <div id="placeholder">
             <i class="fas fa-magnifying-glass-plus"></i>
             <h3>Ready to Analyze</h3>
-            <p>Upload a skin image on the left and click "Analyze" to get your AI-powered diagnosis</p>
+            <p>Upload a clear close-up skin image and click "Analyze" to get a suspected condition and safety guidance.</p>
         </div>
 
         <!-- Result (shown after analysis) -->
@@ -380,7 +380,7 @@ canvas#top3Chart { max-height:140px; }
                     <div><strong>Low confidence:</strong> The model is uncertain. This may not be a dermoscopic image, or the condition may present atypically. Always consult a dermatologist.</div>
                 </div>
                 <div class="chart-section">
-                    <div class="section-title"><i class="fas fa-chart-bar"></i> Top 3 Predictions</div>
+                    <div class="section-title"><i class="fas fa-chart-bar"></i> Top 3 Possible Matches</div>
                     <canvas id="top3Chart"></canvas>
                 </div>
                 <div class="info-section">
@@ -488,7 +488,7 @@ analyzeBtn.addEventListener('click', async () => {
     try {
         const resp = await fetch('/predict', { method:'POST', body:fd });
         const data = await resp.json();
-        if (!resp.ok) { alert(data.error || 'Prediction failed.'); reset(); return; }
+        if (!resp.ok) { alert(data.error || 'Analysis failed.'); reset(); return; }
         showResult(data);
     } catch(err) {
         alert('Network error: ' + (err.message || 'Please try again.'));

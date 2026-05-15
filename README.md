@@ -1,206 +1,92 @@
-# Skin Disease Detection System
+# SkinAI - AI Skin Condition Analysis
 
-## Project Overview
-This project utilizes Convolutional Neural Networks (CNN) to develop an automated skin disease detection system. By leveraging image-based techniques, the system aims to improve accuracy and efficiency in diagnosing various skin diseases.
+SkinAI is a Flask web app for AI-assisted skin image analysis. It accepts a clear close-up skin photo, checks whether a visible lesion or rash is present, then returns a suspected condition, top alternative matches, visible signs, safety guidance, and next steps.
 
----
+This project is not a medical diagnostic device. Results are educational screening support only and should be confirmed by a qualified dermatologist.
 
-## Problem Statement
-Traditional methods for diagnosing skin diseases are prone to inaccuracies and delays. This project addresses these challenges by creating an automated solution capable of early and precise detection.
+## Current Analysis Flow
 
----
+1. User uploads a JPG, PNG, or WebP skin image.
+2. The app rejects images that are too small, too wide, unclear, or not focused on an affected skin area.
+3. If `NVIDIA_API_KEY` is configured, the app uses AI vision analysis as the primary analyzer.
+4. The AI is not restricted to the old local 7-class CNN list. It can return a broad suspected dermatology condition name when the image supports it.
+5. If the AI is uncertain, the app marks the result as low confidence and shows safer next steps instead of forcing a disease name.
+6. If the API is unavailable, the app falls back to the limited local model and labels that result as a fallback.
 
-## Objectives
-- Develop a CNN-based system for skin disease classification.
-- Enhance the accuracy of early diagnosis.
-- Automate and streamline the detection process for faster results.
+## What It Can Analyze
 
----
+The API-first workflow can reason over many visible skin-condition patterns, including:
 
-## State of the Art
-- Current approaches involve manual examination, which is subjective and time-consuming.
-- Existing solutions often fail to handle diverse datasets effectively.
-- Limited adoption of advanced machine learning techniques impacts the precision of diagnosis.
+- Inflammatory rashes and dermatitis-like conditions
+- Fungal, bacterial, viral, and parasitic patterns
+- Acne and follicular disorders
+- Pigment changes
+- Moles, growths, and keratosis-like lesions
+- Vascular-looking lesions
+- Possible skin cancer warning signs
 
----
+No AI photo tool can honestly detect every skin disease with perfect accuracy. Some diseases require history, touch, dermoscopy, lab tests, biopsy, or in-person examination.
 
-## Methodology
-### Data Flow/Architecture
-1. **Dataset Collection:** Gather diverse skin image datasets.
-2. **Preprocessing:** Normalize and augment data for robustness.
-3. **Model Training:** Train an image-analysis model for classification.
-4. **Evaluation:** Use metrics like accuracy, precision, and recall to assess performance.
+## Environment Variables
 
----
+Create a local `.env` file or configure these in your hosting provider:
 
-## Results
-- Achieved significant improvement in classification accuracy.
-- Visualized performance through graphs and confusion matrices.
-- Demonstrated robustness across various skin conditions.
-
----
-
-## Potential Findings
-- 15% improvement in diagnostic accuracy compared to baseline methods.
-- Scalability and reliability for integration into real-world applications.
-
----
-
-## Applications
-- Diagnosis support in dermatology clinics.
-- Integration with telemedicine for remote consultations.
-- Reduction in hospital readmission rates by 20% through early diagnosis.
-
----
-
-## How to Run
-1. Clone the repository.
-2. Install the required dependencies listed in `requirements.txt`.
-3. Run the preprocessing script to prepare the dataset.
-4. Execute the training script to prepare the local fallback model.
-5. Use the prediction script to classify new images.
-
----
-
-## Training (Higher Accuracy)
-This repo includes a stronger training pipeline using EfficientNetV2B0 on the HAM10000 dataset.
-
-### Dataset Setup (HAM10000)
-1. Download the HAM10000 dataset and metadata CSV.
-2. Create this folder structure:
-
-```
-data/
-	ham10000/
-		HAM10000_metadata.csv
-		images/                 (or)
-		HAM10000_images_part_1/
-		HAM10000_images_part_2/
+```bash
+NVIDIA_API_KEY=your_key_here
+NVIDIA_MODEL=nvidia/nemotron-nano-12b-v2-vl
+SECRET_KEY=change_me
+DATABASE_URL=sqlite:///site.db
 ```
 
-The training script will scan those folders and match images with metadata.
+If `NVIDIA_API_KEY` is missing, the app uses the local fallback analyzer.
 
-If your dataset is already extracted under the repo's `archive/` folder, the training script will auto-detect it. You can also point to a custom location by setting `HAM10000_DIR`.
+## Run Locally
 
-### Train
-```
-python train.py
-```
-
-Outputs:
-- `CNN1_trained_model.keras` (best model)
-- `CNN1_trained_model.tflite` (deployment-friendly inference model)
-- `class_names.json` (label order used at inference time)
-
-After training, run the app as usual:
-```
+```bash
+pip install -r requirements.txt
 python app.py
 ```
 
-For local retraining, install the heavier training dependencies:
+Then open:
+
+```text
+http://127.0.0.1:5000
 ```
+
+## Deploy
+
+This repo includes Vercel configuration:
+
+- `vercel.json`
+- `api/index.py`
+- `.vercelignore`
+
+Deploy with:
+
+```bash
+vercel deploy --prod
+```
+
+Set `NVIDIA_API_KEY` and `NVIDIA_MODEL` in Vercel environment variables before deploying.
+
+## Local Fallback Model
+
+The repository still includes the older local model files:
+
+- `CNN1_trained_model.tflite`
+- `CNN1_trained_model.keras`
+- `class_names.json`
+
+These are used only as a fallback when API vision analysis is unavailable. They are limited and should not be presented as broad disease detection.
+
+For retraining experiments, install:
+
+```bash
 pip install -r requirements-train.txt
 ```
 
-### Optional API-Based Analysis
+Then run:
 
-Set `NVIDIA_API_KEY` to use the external vision API as the primary analyzer. If it is not configured, the app falls back to a limited local analyzer and marks the result as uncertain.
-
+```bash
+python train.py
 ```
-NVIDIA_API_KEY=your_key_here
-NVIDIA_MODEL=nvidia/nemotron-nano-12b-v2-vl
-```
-
----
-
-## Prerequisites
-- Python 3.8 or higher
-- TensorFlow 2.x
-- NumPy
-- Matplotlib
-
----
-
-## Contributors
-- # Skin Disease Detection System
-
-## Project Overview
-This project utilizes Convolutional Neural Networks (CNN) to develop an automated skin disease detection system. By leveraging image-based techniques, the system aims to improve accuracy and efficiency in diagnosing various skin diseases.
-
----
-
-## Problem Statement
-Traditional methods for diagnosing skin diseases are prone to inaccuracies and delays. This project addresses these challenges by creating an automated solution capable of early and precise detection.
-
----
-
-## Objectives
-- Develop a CNN-based system for skin disease classification.
-- Enhance the accuracy of early diagnosis.
-- Automate and streamline the detection process for faster results.
-
----
-
-## State of the Art
-- Current approaches involve manual examination, which is subjective and time-consuming.
-- Existing solutions often fail to handle diverse datasets effectively.
-- Limited adoption of advanced machine learning techniques impacts the precision of diagnosis.
-
----
-
-## Methodology
-### Data Flow/Architecture
-1. **Dataset Collection:** Gather diverse skin image datasets.
-2. **Preprocessing:** Normalize and augment data for robustness.
-3. **Model Training:** Train an image-analysis model for classification.
-4. **Evaluation:** Use metrics like accuracy, precision, and recall to assess performance.
-
----
-
-## Results
-- Achieved significant improvement in classification accuracy.
-- Visualized performance through graphs and confusion matrices.
-- Demonstrated robustness across various skin conditions.
-
----
-
-## Potential Findings
-- 15% improvement in diagnostic accuracy compared to baseline methods.
-- Scalability and reliability for integration into real-world applications.
-
----
-
-## Applications
-- Diagnosis support in dermatology clinics.
-- Integration with telemedicine for remote consultations.
-- Reduction in hospital readmission rates by 20% through early diagnosis.
-
----
-
-## How to Run
-1. Clone the repository.
-2. Install the required dependencies listed in `requirements.txt`.
-3. Run the preprocessing script to prepare the dataset.
-4. Execute the training script to prepare the local fallback model.
-5. Use the prediction script to classify new images.
-
----
-
-## Prerequisites
-- Python 3.8 or higher
-- TensorFlow 2.x
-- NumPy
-- Matplotlib
-
----
-
-## Contributors
-- [Tanush Balaraj Alva (4MT22AI402)]
-- [Dhanush M Shetty (4MT21AI018)]
-- [Ismail Sinan (4MT21AI023)]
-- [Prajwal J Rai (4MT21AI037)]
-
----
-
-## Acknowledgments
-This project was guided by [Dr. Yogeesha C B] at the Department of Artificial Intelligence and Machine Learning, Mangalore Institute of Technology & Engineering (MITE).
