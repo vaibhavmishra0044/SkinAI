@@ -437,8 +437,8 @@ def _upload_precheck_issue(image_path):
     if min(w, h) < 160:
         return "The image is too small for reliable skin analysis. Upload a clearer, higher-resolution close-up."
     aspect = max(w / h, h / w)
-    if aspect > 1.70:
-        return "The image looks like a wide banner, screenshot, or non-focused photo. Please crop tightly around the affected skin area."
+    if aspect > 3.00:
+        return "The image is extremely wide or tall for reliable skin analysis. Please crop around the affected skin area."
     return None
 
 def _invalid_upload_result(reason):
@@ -446,7 +446,7 @@ def _invalid_upload_result(reason):
         "visual_findings": "No clear close-up skin condition was available for analysis.",
         "description": "A disease prediction was not made because the uploaded image is not suitable for skin-condition analysis.",
         "symptoms": "Not applicable from this image.",
-        "cause": "The image may be too wide, too small, unclear, or not focused on the affected skin area.",
+        "cause": "The image may be too small, extremely wide, unclear, or not focused on the affected skin area.",
         "differential_diagnoses": "Not applicable from this image.",
         "common_locations": "Not applicable from this image.",
         "contagiousness": "Cannot be determined from this image.",
