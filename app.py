@@ -518,6 +518,22 @@ def _confidence(value):
         num *= 100
     return round(max(0.0, min(100.0, num)), 1)
 
+def _as_report_text(value, default=""):
+    if value is None or value == "":
+        return default
+    if isinstance(value, list):
+        parts = [_as_report_text(item).strip() for item in value]
+        return "; ".join(part for part in parts if part) or default
+    if isinstance(value, dict):
+        parts = []
+        for key, val in value.items():
+            label = str(key).replace("_", " ").strip().title()
+            text = _as_report_text(val).strip()
+            if text:
+                parts.append(f"{label}: {text}")
+        return "; ".join(parts) or default
+    return str(value).strip() or default
+
 def _is_placeholder_condition(name, key):
     text = f"{name or ''} {key or ''}".strip().lower()
     return (
@@ -578,6 +594,8 @@ Rules:
 - Do not diagnose scalp or face conditions unless the scalp or face is actually visible in the uploaded image.
 - Give complete but concise medically useful information. Mention uncertainty, similar-looking conditions, and clinician confirmation tests when relevant.
 - Do not recommend prescription-only medication as something the user should self-start. Present prescription treatments only as doctor-managed options.
+- Return every information field as a plain string, not an array or object.
+- If tinea corporis / ringworm is likely, describe the likely cause as a dermatophyte fungus, note it is usually contagious, suggest antifungal care options, and warn against steroid-only creams unless a clinician advises.
 - Do not copy placeholder text from the JSON schema. Always replace placeholders with actual condition names, or use "Unknown / unclear" only when genuinely uncertain.
 - Include clinically useful information, but state safe next steps. This is visual screening support, not a final diagnosis.
 """.strip()
@@ -652,24 +670,36 @@ Rules:
     top3 = top3[:3]
 
     info = {
-        "visual_findings": analysis.get("visual_findings") or "Visual findings were not clearly identified.",
-        "description": analysis.get("description") or "AI analysis could not provide a reliable description.",
-        "symptoms": analysis.get("symptoms") or "Symptoms vary. Confirm with a qualified clinician.",
-        "cause": analysis.get("cause") or "Unknown.",
-        "differential_diagnoses": analysis.get("differential_diagnoses") or "Several skin conditions can look similar from a photo. A clinician can confirm the diagnosis.",
-        "common_locations": analysis.get("common_locations") or "Can vary by condition and person.",
-        "contagiousness": analysis.get("contagiousness") or "Unknown from this image alone.",
-        "care_options": analysis.get("care_options") or "Use gentle skin care and consult a qualified clinician before starting treatment.",
-        "prevention": analysis.get("prevention") or "Keep skin clean, avoid known triggers, and use sun protection when appropriate.",
-        "what_to_avoid": analysis.get("what_to_avoid") or "Avoid scratching, picking, harsh products, and self-medicating with prescription treatments.",
-        "possible_complications": analysis.get("possible_complications") or "Seek care if the area spreads, becomes painful, bleeds, drains pus, or changes quickly.",
-        "how_doctors_confirm": analysis.get("how_doctors_confirm") or "Doctors may confirm with history, physical exam, dermoscopy, scraping/culture, blood tests, or biopsy depending on the suspected condition.",
-        "recommendations": analysis.get("recommendations") or "Consult a qualified dermatologist for an in-person assessment.",
-        "risk_level": analysis.get("risk_level") or "Unknown",
-        "precautions": analysis.get("precautions") or "Do not rely only on AI for medical diagnosis.",
-        "when_to_see_doctor": analysis.get("when_to_see_doctor") or "Seek medical care if symptoms worsen, spread, bleed, become painful, or do not improve.",
-        "icd": analysis.get("icd") or "N/A",
+        "visual_findings": _as_report_text(analysis.get("visual_findings"), "Visual findings were not clearly identified."),
+        "description": _as_report_text(analysis.get("description"), "AI analysis could not provide a reliable description."),
+        "symptoms": _as_report_text(analysis.get("symptoms"), "Symptoms vary. Confirm with a qualified clinician."),
+        "cause": _as_report_text(analysis.get("cause"), "Unknown."),
+        "differential_diagnoses": _as_report_text(analysis.get("differential_diagnoses"), "Several skin conditions can look similar from a photo. A clinician can confirm the diagnosis."),
+        "common_locations": _as_report_text(analysis.get("common_locations"), "Can vary by condition and person."),
+        "contagiousness": _as_report_text(analysis.get("contagiousness"), "Unknown from this image alone."),
+        "care_options": _as_report_text(analysis.get("care_options"), "Use gentle skin care and consult a qualified clinician before starting treatment."),
+        "prevention": _as_report_text(analysis.get("prevention"), "Keep skin clean, avoid known triggers, and use sun protection when appropriate."),
+        "what_to_avoid": _as_report_text(analysis.get("what_to_avoid"), "Avoid scratching, picking, harsh products, and self-medicating with prescription treatments."),
+        "possible_complications": _as_report_text(analysis.get("possible_complications"), "Seek care if the area spreads, becomes painful, bleeds, drains pus, or changes quickly."),
+        "how_doctors_confirm": _as_report_text(analysis.get("how_doctors_confirm"), "Doctors may confirm with history, physical exam, dermoscopy, scraping/culture, blood tests, or biopsy depending on the suspected condition."),
+        "recommendations": _as_report_text(analysis.get("recommendations"), "Consult a qualified dermatologist for an in-person assessment."),
+        "risk_level": _as_report_text(analysis.get("risk_level"), "Unknown"),
+        "precautions": _as_report_text(analysis.get("precautions"), "Do not rely only on AI for medical diagnosis."),
+        "when_to_see_doctor": _as_report_text(analysis.get("when_to_see_doctor"), "Seek medical care if symptoms worsen, spread, bleed, become painful, or do not improve."),
+        "icd": _as_report_text(analysis.get("icd"), "N/A"),
     }
+    condition_text = f"{key} {condition_name}".lower()
+    if "tinea" in condition_text or "ringworm" in condition_text:
+        if "unknown" in info["cause"].lower() or "unclear" in info["cause"].lower():
+            info["cause"] = "Most commonly caused by dermatophyte fungi that infect the outer layer of skin."
+        if "unknown" in info["contagiousness"].lower() or "unclear" in info["contagiousness"].lower():
+            info["contagiousness"] = "Usually contagious through skin contact, infected animals, shared towels/clothing, or contaminated surfaces."
+        unsafe_care = any(word in info["care_options"].lower() for word in ("hydrocortisone", "corticosteroid", "steroid"))
+        if unsafe_care:
+            info["care_options"] = "Keep the area clean and dry. Antifungal creams are commonly used for suspected ringworm as directed on the label. Avoid steroid-only creams unless a clinician advises, because they can worsen or mask fungal infection."
+        if "steroid" not in info["what_to_avoid"].lower():
+            separator = " " if info["what_to_avoid"].rstrip().endswith((".", "!", "?")) else ". "
+            info["what_to_avoid"] = f"{info['what_to_avoid'].rstrip()}{separator}Avoid steroid-only creams if ringworm is possible unless a clinician advises."
     top3[0]["info"] = info
     top3[0]["invalid_image"] = False
     return top3
