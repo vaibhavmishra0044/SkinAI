@@ -147,6 +147,39 @@
         }
         .file-info { font-size: 12px; color: var(--gray-400); font-weight: 600; text-align: center; margin-top: 6px; }
 
+        .context-section, .chat-section {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 10px;
+            padding: 14px;
+            box-shadow: var(--shadow);
+        }
+        .context-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .context-field.full { grid-column: 1 / -1; }
+        .context-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--gray-500);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+        .context-input {
+            width: 100%;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 9px 10px;
+            font: inherit;
+            font-size: 12px;
+            color: var(--gray-700);
+            background: var(--gray-50);
+            outline: none;
+        }
+        .context-input:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 3px rgba(14,165,233,.12); }
+        textarea.context-input { min-height: 62px; resize: vertical; }
+        .context-help { margin-top: 8px; color: var(--gray-400); font-size: 11px; line-height: 1.5; }
+
         /* Analyze button */
         .btn-analyze {
             display: none; width: 100%; padding: 14px;
@@ -197,6 +230,59 @@
         }
 
         /* ── Right Panel ─────────────────────────────────────────── */
+        .chat-disclaimer {
+            margin-top: 8px;
+            padding: 9px 10px;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            color: #92400e;
+            font-size: 11px;
+            line-height: 1.45;
+        }
+        .chat-messages {
+            height: 220px;
+            overflow-y: auto;
+            margin-top: 10px;
+            padding: 10px;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .chat-bubble {
+            max-width: 92%;
+            padding: 9px 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .chat-bubble.assistant {
+            background: white;
+            border: 1px solid var(--gray-200);
+            color: var(--gray-700);
+            align-self: flex-start;
+        }
+        .chat-bubble.user {
+            background: var(--primary);
+            color: white;
+            align-self: flex-end;
+        }
+        .chat-input-row { display: grid; grid-template-columns: 1fr 42px; gap: 8px; margin-top: 10px; }
+        #chatInput { min-height: 42px; max-height: 100px; resize: vertical; }
+        .chat-send-btn {
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        .chat-send-btn:disabled { opacity: .55; cursor: not-allowed; }
+
         .right-panel {
             flex: 1;
             overflow-y: auto;
@@ -612,6 +698,33 @@
             <div class="file-info" id="fileInfo"></div>
         </div>
 
+        <div class="context-section">
+            <div class="panel-title">
+                <i class="fas fa-clipboard-list"></i> Symptoms &amp; Context
+            </div>
+            <div class="context-grid">
+                <div class="context-field">
+                    <label class="context-label" for="bodyLocation">Body Area</label>
+                    <input class="context-input" id="bodyLocation" type="text" placeholder="e.g. arm, scalp, face">
+                </div>
+                <div class="context-field">
+                    <label class="context-label" for="duration">Duration</label>
+                    <input class="context-input" id="duration" type="text" placeholder="e.g. 3 days, 2 weeks">
+                </div>
+                <div class="context-field full">
+                    <label class="context-label" for="symptomsInput">Symptoms</label>
+                    <textarea class="context-input" id="symptomsInput" placeholder="Itching, pain, burning, spreading, fever, bleeding..."></textarea>
+                </div>
+                <div class="context-field full">
+                    <label class="context-label" for="extraNotes">Other Notes</label>
+                    <textarea class="context-input" id="extraNotes" placeholder="Medicines used, allergy, animal contact, new soap, diabetes, etc."></textarea>
+                </div>
+            </div>
+            <div class="context-help">
+                These details help the AI compare similar-looking conditions. Do not include private identity information.
+            </div>
+        </div>
+
         <!-- Analyze button -->
         <button id="analyzeBtn" class="btn-analyze" type="button">
             <i class="fas fa-brain"></i>&nbsp; Analyze with AI
@@ -651,6 +764,24 @@
             <span><a href="{{ url_for('login') }}" style="font-weight:700;color:var(--primary-dark);">Log in</a> to save your results to history.</span>
         </div>
         {% endif %}
+
+        <div class="chat-section">
+            <div class="panel-title">
+                <i class="fas fa-comments"></i> AI Skin Chat
+            </div>
+            <div class="chat-disclaimer">
+                Educational guidance only. For severe pain, fever, swelling, spreading rash, pus, blisters, eye/genital involvement, or breathing trouble, seek urgent medical care.
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="chat-bubble assistant">Upload a photo and symptoms, then ask follow-up questions like "What should I avoid?" or "When should I see a doctor?"</div>
+            </div>
+            <div class="chat-input-row">
+                <textarea class="context-input" id="chatInput" placeholder="Ask about this result..."></textarea>
+                <button class="chat-send-btn" id="chatSendBtn" type="button" title="Send">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Right: Results Panel -->
@@ -716,8 +847,18 @@ const loadingWrap = document.getElementById('loadingWrap');
 const placeholder = document.getElementById('placeholder');
 const resultWrap  = document.getElementById('resultWrap');
 const modelBadge  = document.getElementById('modelBadgeTop');
+const bodyLocation = document.getElementById('bodyLocation');
+const durationInput = document.getElementById('duration');
+const symptomsInput = document.getElementById('symptomsInput');
+const extraNotes = document.getElementById('extraNotes');
+const chatMessagesEl = document.getElementById('chatMessages');
+const chatInput = document.getElementById('chatInput');
+const chatSendBtn = document.getElementById('chatSendBtn');
 let selectedFile  = null;
 let chartInstance = null;
+let lastAnalysis = null;
+let lastPatientContext = {};
+const chatHistory = [];
 
 /* ── Drag & Drop ───────────────────────────────────────── */
 uploadZone.addEventListener('click', () => fileInput.click());
@@ -732,9 +873,20 @@ fileInput.addEventListener('change', handleFile);
 
 function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
+function collectPatientContext() {
+    return {
+        body_location: bodyLocation.value.trim(),
+        duration: durationInput.value.trim(),
+        symptoms: symptomsInput.value.trim(),
+        extra_notes: extraNotes.value.trim(),
+    };
+}
+
 function handleFile() {
     selectedFile = fileInput.files[0];
     if (!selectedFile) return;
+    lastAnalysis = null;
+    lastPatientContext = collectPatientContext();
     const allowed = ['image/jpeg', 'image/png', 'image/webp'];
     if (!allowed.includes(selectedFile.type)) {
         alert('Please upload a JPG, PNG, or WebP image.');
@@ -763,6 +915,10 @@ analyzeBtn.addEventListener('click', async () => {
     if (!selectedFile) return;
     const fd = new FormData();
     fd.append('file', selectedFile);
+    fd.append('body_location', bodyLocation.value.trim());
+    fd.append('duration', durationInput.value.trim());
+    fd.append('symptoms', symptomsInput.value.trim());
+    fd.append('extra_notes', extraNotes.value.trim());
     analyzeBtn.disabled = true;
     loadingWrap.style.display = 'block';
     analyzeBtn.style.display = 'none';
@@ -793,6 +949,8 @@ analyzeBtn.addEventListener('click', async () => {
         const resp = await fetch('/predict', { method: 'POST', body: fd });
         const data = await resp.json();
         if (!resp.ok) { alert(data.error || 'Analysis failed.'); reset(); return; }
+        lastAnalysis = data;
+        lastPatientContext = data.patient_context || collectPatientContext();
         showResult(data);
     } catch (err) {
         alert('Network error: ' + (err.message || 'Please try again.'));
@@ -1018,6 +1176,56 @@ function showResult(data) {
         if (fill) fill.style.width = conf.toFixed(1) + '%';
     }, 80);
 }
+
+function addChatBubble(role, text) {
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-bubble ' + role;
+    bubble.textContent = text;
+    chatMessagesEl.appendChild(bubble);
+    chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+}
+
+async function sendChatMessage() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+    chatInput.value = '';
+    addChatBubble('user', text);
+    chatHistory.push({ role: 'user', content: text });
+    chatSendBtn.disabled = true;
+    const thinking = document.createElement('div');
+    thinking.className = 'chat-bubble assistant';
+    thinking.textContent = 'Thinking...';
+    chatMessagesEl.appendChild(thinking);
+    chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+    try {
+        const resp = await fetch('/ai-chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                messages: chatHistory,
+                analysis: lastAnalysis || {},
+                patient_context: lastPatientContext && Object.keys(lastPatientContext).length ? lastPatientContext : collectPatientContext(),
+            }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error || 'Chat failed.');
+        thinking.textContent = data.reply || 'I could not generate a helpful answer. Please try again.';
+        chatHistory.push({ role: 'assistant', content: thinking.textContent });
+    } catch (err) {
+        thinking.textContent = (err.message || 'AI chat is unavailable right now.') + ' Please try again in a moment.';
+    } finally {
+        chatSendBtn.disabled = false;
+        chatInput.focus();
+    }
+}
+
+chatSendBtn.addEventListener('click', sendChatMessage);
+chatInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendChatMessage();
+    }
+});
 
 function reset() {
     selectedFile = null;

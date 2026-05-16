@@ -470,6 +470,29 @@ def _invalid_upload_result(reason):
         "invalid_reason": reason,
     }]
 
+def _clean_context_text(value, limit=400):
+    text = re.sub(r"\s+", " ", str(value or "")).strip()
+    return text[:limit]
+
+def _patient_context_from_request(source):
+    return {
+        "body_location": _clean_context_text(source.get("body_location"), 120),
+        "duration": _clean_context_text(source.get("duration"), 120),
+        "symptoms": _clean_context_text(source.get("symptoms"), 300),
+        "extra_notes": _clean_context_text(source.get("extra_notes"), 400),
+    }
+
+def _patient_context_prompt(patient_context):
+    patient_context = patient_context or {}
+    rows = [
+        ("Body location", patient_context.get("body_location")),
+        ("Duration", patient_context.get("duration")),
+        ("Symptoms", patient_context.get("symptoms")),
+        ("Extra notes", patient_context.get("extra_notes")),
+    ]
+    lines = [f"- {label}: {value or 'Not provided'}" for label, value in rows]
+    return "\n".join(lines)
+
 def _json_from_model_text(text):
     cleaned = re.sub(r"^```(?:json)?|```$", "", text.strip(), flags=re.IGNORECASE | re.MULTILINE).strip()
     try:
@@ -543,13 +566,37 @@ def _is_placeholder_condition(name, key):
         or key in {"short_key", "unknown_lesion"}
     )
 
-def run_nvidia_inference(image_path):
+def _call_nvidia_chat(messages, max_tokens=900):
+    if not USE_NVIDIA_API:
+        raise RuntimeError("NVIDIA_API_KEY is not configured")
+    payload = {
+        "model": NVIDIA_MODEL,
+        "messages": messages,
+        "temperature": 0.2,
+        "max_tokens": max_tokens,
+    }
+    headers = {
+        "Authorization": f"Bearer {NVIDIA_API_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+    resp = requests.post(NVIDIA_API_URL, headers=headers, json=payload, timeout=45)
+    if resp.status_code >= 400:
+        raise RuntimeError(f"NVIDIA API returned {resp.status_code}: {resp.text[:300]}")
+    data = resp.json()
+    return data.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+
+def run_nvidia_inference(image_path, patient_context=None):
     if not USE_NVIDIA_API:
         raise RuntimeError("NVIDIA_API_KEY is not configured")
 
     data_url = _image_data_url_for_api(image_path)
+    context_text = _patient_context_prompt(patient_context)
     prompt = f"""
 Analyze this uploaded image for a visible dermatology/skin condition. Return JSON only.
+
+Patient-provided context:
+{context_text}
 
 Use this exact schema:
 {{
@@ -586,6 +633,7 @@ Rules:
 - Do not restrict yourself to a fixed class list. Use the best dermatology condition name you can infer from the image.
 - Think broadly across common and uncommon visible skin conditions, including inflammatory rashes, fungal/bacterial/viral/parasitic infections, pigment disorders, acne/follicular disorders, vascular lesions, benign growths, precancerous lesions, and possible skin cancer warning signs.
 - If one exact disease cannot be determined from the image, return the most likely visible pattern and list realistic differential diagnoses in top3 instead of forcing a random confident answer.
+- Use the patient-provided body location, duration, and symptoms as supporting context, but do not let text override what is visible in the image.
 - First decide whether this is a usable dermatology photo. It must be a close-up of an affected skin area where a lesion/rash/patch is clearly visible.
 - Reject non-diagnostic images: doctors, stethoscopes, medical icons, app backgrounds, posters, screenshots, distant body photos, normal hands/arms without a visible lesion, or any image where the skin condition is not the main subject.
 - If the image is not a usable close-up skin-condition photo, set is_skin_image=false, lesion_visible=false, condition_name="No clear skin lesion detected", condition_key="unknown_normal", confidence=0.
@@ -850,6 +898,7 @@ def predict():
     tmp = tempfile.NamedTemporaryFile(suffix=ext, delete=False)
     fallback_warning = False
     api_error = None
+    patient_context = _patient_context_from_request(request.form)
     try:
         file.save(tmp.name)
         tmp.close()
@@ -859,7 +908,7 @@ def predict():
             model_used = "AI Vision Analysis"
         elif USE_NVIDIA_API:
             try:
-                top3_raw = run_nvidia_inference(tmp.name)
+                top3_raw = run_nvidia_inference(tmp.name, patient_context)
                 model_used = "AI Vision Analysis"
             except Exception as e:
                 api_error = str(e)
@@ -957,8 +1006,68 @@ def predict():
         'risk_color':          risk_info[1],
         'risk_bg':             risk_info[2],
         'model_used':          model_used,
+        'patient_context':     patient_context,
         'api_error':           api_error if app.debug else None,
     })
+
+@app.route('/ai-chat', methods=['POST'])
+def ai_chat():
+    data = request.get_json(silent=True) or {}
+    raw_messages = data.get("messages") or []
+    if not isinstance(raw_messages, list):
+        return jsonify({"error": "Invalid chat messages."}), 400
+
+    chat_messages = []
+    for msg in raw_messages[-10:]:
+        if not isinstance(msg, dict):
+            continue
+        role = msg.get("role")
+        if role not in {"user", "assistant"}:
+            continue
+        content = _clean_context_text(msg.get("content"), 1200)
+        if content:
+            chat_messages.append({"role": role, "content": content})
+    if not chat_messages or chat_messages[-1]["role"] != "user":
+        return jsonify({"error": "Please send a question."}), 400
+
+    analysis = data.get("analysis") if isinstance(data.get("analysis"), dict) else {}
+    patient_context = data.get("patient_context") if isinstance(data.get("patient_context"), dict) else {}
+    scan_context = {
+        "suspected_condition": _as_report_text(analysis.get("predicted_class"), "No scan result yet"),
+        "confidence": _as_report_text(analysis.get("confidence"), "Unknown"),
+        "risk_level": _as_report_text(analysis.get("risk_level"), "Unknown"),
+        "visible_findings": _as_report_text(analysis.get("visual_findings"), "Not available"),
+        "symptoms": _as_report_text(analysis.get("symptoms"), "Not available"),
+        "cause": _as_report_text(analysis.get("cause"), "Unknown"),
+        "care_options": _as_report_text(analysis.get("care_options"), "Not available"),
+        "when_to_see_doctor": _as_report_text(analysis.get("when_to_see_doctor"), "Not available"),
+        "patient_context": _patient_context_prompt(patient_context),
+    }
+    system_prompt = f"""
+You are SkinAI Care Chat, an AI dermatology education assistant, not a doctor.
+
+Current scan context:
+{json.dumps(scan_context, ensure_ascii=False)}
+
+Rules:
+- Give practical, plain-language, short advice about skin conditions and next steps.
+- Do not claim a final diagnosis or 100% certainty.
+- Do not prescribe prescription-only medicines or give exact prescription dosing.
+- For over-the-counter care, stay general and advise following the product label.
+- Recommend a qualified dermatologist/clinician when confirmation or treatment is needed.
+- Tell the user to seek urgent care for red flags: trouble breathing, swelling of lips/face/eyes, fever with rash, rapidly spreading rash, severe pain, black/purple skin, pus, red streaks, eye/genital involvement, widespread blisters, or a very sick child/immunocompromised patient.
+- Ask one clarifying question if the user's question cannot be answered safely from the available context.
+""".strip()
+    messages = [{"role": "system", "content": system_prompt}] + chat_messages
+
+    try:
+        reply = _call_nvidia_chat(messages)
+    except Exception as e:
+        return jsonify({
+            "error": "AI chat is temporarily unavailable.",
+            "detail": str(e) if app.debug else None,
+        }), 503
+    return jsonify({"reply": reply or "I could not generate a helpful answer. Please try again."})
 
 @app.route('/feedback', methods=['POST'])
 @login_required
