@@ -522,9 +522,9 @@ def _patient_context_from_request(source):
         "pain": _clean_context_text(source.get("pain"), 20),
         "spreading": _clean_context_text(source.get("spreading"), 20),
         "fever": _clean_context_text(source.get("fever"), 20),
-        "symptoms": _clean_context_text(source.get("symptoms"), 300),
+        "symptoms": _clean_context_text(source.get("symptoms"), 1000),
         "medicine_history": _clean_context_text(source.get("medicine_history"), 400),
-        "extra_notes": _clean_context_text(source.get("extra_notes"), 400),
+        "extra_notes": _clean_context_text(source.get("extra_notes"), 1000),
     }
 
 def _patient_context_prompt(patient_context):
@@ -615,6 +615,46 @@ def _is_placeholder_condition(name, key):
         or "unknown / unclear" in text
         or key in {"short_key", "unknown_lesion"}
     )
+
+def _default_verification_quiz(condition_name="this skin condition"):
+    condition_name = _clean_context_text(condition_name, 120) or "this skin condition"
+    return {
+        "condition_name": condition_name,
+        "intro": f"Answer these questions to check whether your symptoms fit the preliminary image match: {condition_name}.",
+        "questions": [
+            {
+                "id": "itching",
+                "question": "Is the affected area itchy?",
+                "options": ["Yes, itchy", "No itching", "Not sure"],
+                "why": "Itching helps separate fungal, allergic, eczema-like, and other rash patterns.",
+            },
+            {
+                "id": "shape_change",
+                "question": "What best describes the shape or edge?",
+                "options": ["Ring or raised edge", "Flat patch", "Bumps or pimples", "Not sure"],
+                "why": "Shape and border can support or weaken the preliminary visual match.",
+            },
+            {
+                "id": "spread",
+                "question": "Has it spread or become larger?",
+                "options": ["Yes, spreading", "No, stable", "Improving", "Not sure"],
+                "why": "Spreading can suggest infection, inflammation, or irritation patterns.",
+            },
+            {
+                "id": "pain_discharge",
+                "question": "Is there pain, pus, bleeding, or warmth?",
+                "options": ["Pain or burning", "Pus or bleeding", "Warm/swollen", "None of these"],
+                "why": "These can be warning signs or point toward different causes.",
+            },
+            {
+                "id": "exposure",
+                "question": "Any recent trigger or exposure?",
+                "options": ["Animal/contact sports", "New soap/cosmetic", "Medicine started", "No known trigger"],
+                "why": "Triggers help compare infections, allergies, drug reactions, and irritation.",
+            },
+        ],
+        "fallback": True,
+    }
 
 def _call_nvidia_chat(messages, max_tokens=900):
     if not USE_NVIDIA_API:
@@ -932,6 +972,100 @@ def detect_page():
 def scan_page():
     return render_template('scan_window.html')
 
+@app.route('/generate-quiz', methods=['POST'])
+def generate_quiz():
+    data = request.get_json(silent=True) or {}
+    analysis = data.get("analysis") if isinstance(data.get("analysis"), dict) else {}
+    condition_name = _as_report_text(analysis.get("predicted_class"), "Unknown skin condition")
+    confidence = _confidence(analysis.get("confidence"))
+    visual_findings = _as_report_text(analysis.get("visual_findings"), "Not provided")
+    top3 = analysis.get("top3") if isinstance(analysis.get("top3"), list) else []
+    top3_text = "; ".join(
+        f"{_as_report_text(item.get('class_name'), item.get('class_key', 'Possible match'))} ({_confidence(item.get('confidence'))}%)"
+        for item in top3[:3]
+        if isinstance(item, dict)
+    ) or "Not provided"
+
+    if not USE_NVIDIA_API:
+        return jsonify(_default_verification_quiz(condition_name))
+
+    prompt = f"""
+Create a short symptom verification quiz for a user after an image-only skin scan.
+
+Preliminary image result:
+- Condition: {condition_name}
+- Confidence: {confidence}%
+- Visible findings: {visual_findings}
+- Top matches: {top3_text}
+
+Return JSON only with this exact schema:
+{{
+  "condition_name": "{condition_name}",
+  "intro": "one short sentence explaining that this quiz checks whether symptoms fit the preliminary image result",
+  "questions": [
+    {{
+      "id": "short_lowercase_id",
+      "question": "question text",
+      "options": ["short option 1", "short option 2", "short option 3", "Not sure"],
+      "why": "short reason this question matters"
+    }}
+  ]
+}}
+
+Rules:
+- Generate 4 to 5 multiple-choice questions.
+- Each question must help support or refute the preliminary condition and its common differentials.
+- Ask about symptoms, body location, duration, spread, pain/itch, discharge/bleeding, triggers, contact/exposure, or warning signs when relevant.
+- Options must be simple and user-selectable. Include "Not sure" when useful.
+- Do not ask for identity information.
+- Do not diagnose or promise certainty.
+- Do not include treatment instructions here.
+- Keep all strings concise.
+""".strip()
+
+    try:
+        content = _call_nvidia_chat([
+            {
+                "role": "system",
+                "content": "You create cautious dermatology symptom verification quizzes. Return strict JSON only.",
+            },
+            {"role": "user", "content": prompt},
+        ], max_tokens=900)
+        quiz = _json_from_model_text(content)
+        questions = quiz.get("questions") if isinstance(quiz, dict) else None
+        if not isinstance(questions, list) or not questions:
+            raise ValueError("Quiz response did not include questions")
+
+        cleaned_questions = []
+        for idx, question in enumerate(questions[:5]):
+            if not isinstance(question, dict):
+                continue
+            q_text = _clean_context_text(question.get("question"), 220)
+            options = question.get("options") if isinstance(question.get("options"), list) else []
+            options = [_clean_context_text(option, 80) for option in options if _clean_context_text(option, 80)]
+            if not q_text or len(options) < 2:
+                continue
+            if not any(option.lower() == "not sure" for option in options):
+                options.append("Not sure")
+            cleaned_questions.append({
+                "id": _condition_key(question.get("id") or f"question_{idx + 1}")[:40],
+                "question": q_text,
+                "options": options[:5],
+                "why": _clean_context_text(question.get("why"), 220),
+            })
+        if not cleaned_questions:
+            raise ValueError("No usable quiz questions returned")
+        return jsonify({
+            "condition_name": _clean_context_text(quiz.get("condition_name") or condition_name, 120),
+            "intro": _clean_context_text(quiz.get("intro"), 260) or f"Answer these to check whether your symptoms fit {condition_name}.",
+            "questions": cleaned_questions,
+            "fallback": False,
+        })
+    except Exception as exc:
+        fallback = _default_verification_quiz(condition_name)
+        fallback["error"] = str(exc) if app.debug else None
+        return jsonify(fallback)
+
 @app.route('/predict', methods=['POST'])
 def predict():
     if 'file' not in request.files:
@@ -1008,8 +1142,10 @@ def predict():
     })
     risk_info = RISK_COLORS.get(info['risk_level'], ('gray', '#64748b', '#f1f5f9'))
 
-    # Save prediction to DB only for authenticated users
-    if current_user.is_authenticated:
+    save_result = str(request.form.get("save_result", "true")).strip().lower() not in {"0", "false", "no"}
+
+    # Save prediction to DB only for authenticated users and final results
+    if current_user.is_authenticated and save_result:
         pred_record = Prediction(
             user_id         = current_user.id,
             predicted_class = primary['class_name'],

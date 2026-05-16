@@ -318,6 +318,76 @@
             font-weight:900;
         }
         .check-card input { accent-color:var(--teal); }
+        .prelim-summary {
+            display:none;
+            margin-bottom:18px;
+            padding:18px;
+            border:1px solid #bbf7e7;
+            border-radius:22px;
+            background:linear-gradient(135deg, rgba(220,253,247,.86), rgba(224,242,254,.62));
+        }
+        .prelim-summary.show { display:block; }
+        .prelim-summary strong {
+            display:block;
+            color:#06443f;
+            font-size:18px;
+            margin-bottom:6px;
+        }
+        .prelim-summary p {
+            color:#4e6870;
+            font-size:13px;
+            line-height:1.55;
+            font-weight:750;
+        }
+        .quiz-list {
+            display:grid;
+            gap:14px;
+            margin-bottom:18px;
+        }
+        .quiz-question {
+            padding:16px;
+            border:1px solid var(--line);
+            border-radius:20px;
+            background:#fbffff;
+        }
+        .quiz-question h3 {
+            color:#12323a;
+            font-size:16px;
+            line-height:1.35;
+            margin-bottom:7px;
+        }
+        .quiz-question p {
+            color:var(--muted);
+            font-size:12px;
+            line-height:1.45;
+            font-weight:750;
+            margin-bottom:12px;
+        }
+        .quiz-options {
+            display:grid;
+            grid-template-columns:repeat(2, minmax(0,1fr));
+            gap:9px;
+        }
+        .quiz-option {
+            display:flex;
+            align-items:center;
+            gap:9px;
+            min-height:46px;
+            padding:10px 12px;
+            border:1px solid #dbe9e7;
+            border-radius:15px;
+            color:#334c54;
+            background:white;
+            font-size:13px;
+            font-weight:850;
+            cursor:pointer;
+        }
+        .quiz-option input { accent-color:var(--teal); }
+        .quiz-option:has(input:checked) {
+            border-color:rgba(15,159,141,.55);
+            background:var(--soft-teal);
+            color:#06443f;
+        }
         .actions-row {
             display:flex;
             justify-content:space-between;
@@ -817,6 +887,7 @@
             .step-panel { padding:20px; }
             .form-grid,
             .check-grid,
+            .quiz-options,
             .upload-layout,
             .result-grid,
             .details-grid,
@@ -895,6 +966,11 @@
             </div>
 
             <section class="step-panel" data-step-panel="symptoms">
+                <div class="prelim-summary" id="prelimSummary">
+                    <strong>Preliminary scan result</strong>
+                    <p id="prelimSummaryText">The AI image scan result will appear here before the quiz.</p>
+                </div>
+                <div class="quiz-list" id="quizQuestions"></div>
                 <div class="form-grid">
                     <div class="field">
                         <label for="bodyLocation">Body Area</label>
@@ -966,7 +1042,7 @@
                     <span></span>
                     <div class="right">
                         <button class="btn" type="button" id="resetImageBtn"><i class="fas fa-rotate-left"></i> Reset Image</button>
-                        <button class="btn btn-primary" id="imageNextBtn" type="button">Next: Symptom Quiz <i class="fas fa-arrow-right"></i></button>
+                        <button class="btn btn-primary" id="imageNextBtn" type="button"><i class="fas fa-brain"></i> Scan & Generate Quiz</button>
                     </div>
                 </div>
             </section>
@@ -975,8 +1051,8 @@
                 <div class="loading-card">
                     <div>
                         <div class="loader"></div>
-                        <h2>Analyzing your scan</h2>
-                        <p>SkinAI is checking the scan with your symptom quiz and asking the AI vision model for a verified structured result.</p>
+                        <h2 id="loadingTitle">Analyzing your scan</h2>
+                        <p id="loadingCopy">SkinAI is checking the scan with your symptom quiz and asking the AI vision model for a verified structured result.</p>
                     </div>
                 </div>
             </section>
@@ -1032,8 +1108,8 @@
             <div class="mini-card">
                 <div class="mini-title"><i class="fas fa-location-arrow"></i> Current Progress</div>
                 <div class="status-list">
-                    <div class="status-item active" data-status="upload"><i class="fas fa-circle"></i> Image uploaded</div>
-                    <div class="status-item" data-status="symptoms"><i class="fas fa-circle"></i> Symptom quiz completed</div>
+                    <div class="status-item active" data-status="upload"><i class="fas fa-circle"></i> Preliminary scan</div>
+                    <div class="status-item" data-status="symptoms"><i class="fas fa-circle"></i> AI symptom quiz</div>
                     <div class="status-item" data-status="result"><i class="fas fa-circle"></i> Result generated</div>
                     <div class="status-item" data-status="chatReady"><i class="fas fa-circle"></i> AI chat unlocked</div>
                 </div>
@@ -1080,6 +1156,9 @@
 const stepOrder = ['upload', 'symptoms', 'result', 'chatReady'];
 let currentStep = 'upload';
 let selectedFile = null;
+let optimizedUploadFile = null;
+let preliminaryAnalysis = null;
+let generatedQuiz = null;
 let lastAnalysis = null;
 let lastPatientContext = {};
 let chatUnlocked = false;
@@ -1102,6 +1181,9 @@ const medicineHistory = document.getElementById('medicineHistory');
 const extraNotes = document.getElementById('extraNotes');
 const clearSymptomsBtn = document.getElementById('clearSymptomsBtn');
 const imageNextBtn = document.getElementById('imageNextBtn');
+const prelimSummary = document.getElementById('prelimSummary');
+const prelimSummaryText = document.getElementById('prelimSummaryText');
+const quizQuestions = document.getElementById('quizQuestions');
 const uploadZone = document.getElementById('uploadZone');
 const fileInput = document.getElementById('fileInput');
 const previewCard = document.getElementById('previewCard');
@@ -1118,6 +1200,8 @@ const chatClose = document.getElementById('chatClose');
 const chatMessages = document.getElementById('chatMessages');
 const chatInput = document.getElementById('chatInput');
 const sendChatBtn = document.getElementById('sendChatBtn');
+const loadingTitle = document.getElementById('loadingTitle');
+const loadingCopy = document.getElementById('loadingCopy');
 
 const copyByStep = {
     upload: {
@@ -1210,6 +1294,32 @@ function hasSymptomContext() {
     );
 }
 
+function collectQuizAnswers() {
+    const answers = [];
+    (generatedQuiz?.questions || []).forEach((question, index) => {
+        const selected = document.querySelector(`input[name="quiz_${index}"]:checked`);
+        if (selected) {
+            answers.push({
+                id: question.id || `question_${index + 1}`,
+                question: question.question,
+                answer: selected.value,
+            });
+        }
+    });
+    return answers;
+}
+
+function allQuizAnswered() {
+    const questions = generatedQuiz?.questions || [];
+    return questions.length > 0 && collectQuizAnswers().length === questions.length;
+}
+
+function quizAnswersText() {
+    return collectQuizAnswers()
+        .map(item => `${item.question}: ${item.answer}`)
+        .join('; ');
+}
+
 function clearSymptoms() {
     [bodyLocation, durationInput, symptomsInput, medicineHistory, extraNotes].forEach(input => { input.value = ''; });
     [itchingInput, painInput, spreadingInput, feverInput].forEach(input => { input.checked = false; });
@@ -1251,6 +1361,14 @@ async function optimizeImageForUpload(file) {
     return new File([blob], `${baseName}-optimized.jpg`, { type:'image/jpeg', lastModified:Date.now() });
 }
 
+async function getOptimizedUploadFile() {
+    if (!selectedFile) return null;
+    if (!optimizedUploadFile) {
+        optimizedUploadFile = await optimizeImageForUpload(selectedFile);
+    }
+    return optimizedUploadFile;
+}
+
 function handleFile() {
     const file = fileInput.files[0];
     if (!file) return;
@@ -1268,6 +1386,11 @@ function handleFile() {
         return;
     }
     selectedFile = file;
+    optimizedUploadFile = null;
+    preliminaryAnalysis = null;
+    generatedQuiz = null;
+    quizQuestions.innerHTML = '';
+    prelimSummary.classList.remove('show');
     const reader = new FileReader();
     reader.onload = event => {
         previewImg.src = event.target.result;
@@ -1280,10 +1403,15 @@ function handleFile() {
 
 function resetImage() {
     selectedFile = null;
+    optimizedUploadFile = null;
+    preliminaryAnalysis = null;
+    generatedQuiz = null;
     fileInput.value = '';
     previewImg.removeAttribute('src');
     previewCard.style.display = 'none';
     uploadZone.style.display = 'grid';
+    quizQuestions.innerHTML = '';
+    prelimSummary.classList.remove('show');
 }
 
 function riskColors(risk) {
@@ -1325,11 +1453,63 @@ function renderMatches(top3) {
     }).join('') || '<p style="color:#61777f;font-weight:750;">No alternatives returned.</p>';
 }
 
+function renderQuiz(quiz, analysis) {
+    generatedQuiz = quiz || { questions: [] };
+    const condition = analysis?.predicted_class || generatedQuiz.condition_name || 'the preliminary match';
+    const confidence = Number(analysis?.confidence || 0);
+    prelimSummaryText.textContent = `${condition} was the preliminary image match (${confidence.toFixed(1)}% confidence). Answer the AI-generated quiz so the final analysis can verify whether your symptoms fit.`;
+    prelimSummary.classList.add('show');
+
+    const questions = generatedQuiz.questions || [];
+    quizQuestions.innerHTML = questions.map((question, index) => {
+        const options = Array.isArray(question.options) ? question.options : [];
+        const optionsHtml = options.map((option, optionIndex) => `
+            <label class="quiz-option">
+                <input type="radio" name="quiz_${index}" value="${esc(option)}">
+                <span>${esc(option)}</span>
+            </label>
+        `).join('');
+        return `
+            <div class="quiz-question">
+                <h3>${index + 1}. ${esc(question.question || 'Question')}</h3>
+                <p>${esc(question.why || 'This helps compare the image result with your symptoms.')}</p>
+                <div class="quiz-options">${optionsHtml}</div>
+            </div>
+        `;
+    }).join('');
+}
+
 function unlockChat() {
     chatUnlocked = true;
     chatLauncher.classList.add('show');
     chatInput.disabled = false;
     sendChatBtn.disabled = false;
+}
+
+async function runPrediction(context, saveResult) {
+    const uploadFile = await getOptimizedUploadFile();
+    if (!uploadFile) throw new Error('Please upload a skin image first.');
+
+    const formData = new FormData();
+    formData.append('file', uploadFile);
+    formData.append('save_result', saveResult ? 'true' : 'false');
+    Object.entries(context || {}).forEach(([key, value]) => formData.append(key, value || ''));
+
+    const response = await fetch('/predict', { method:'POST', body:formData });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Analysis failed.');
+    return data;
+}
+
+async function generateQuizFromAnalysis(analysis) {
+    const response = await fetch('/generate-quiz', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body:JSON.stringify({ analysis }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Quiz generation failed.');
+    return data;
 }
 
 function renderResult(data) {
@@ -1381,21 +1561,26 @@ async function analyzeSkin() {
         alert('Please upload a skin image first.');
         return;
     }
-    if (!hasSymptomContext()) {
-        alert('Please answer at least one symptom quiz item so the AI can verify the scan.');
+    if (!allQuizAnswered()) {
+        alert('Please answer all AI quiz questions so the final result can verify the scan.');
         return;
     }
-    lastPatientContext = collectPatientContext();
+
+    const context = collectPatientContext();
+    const answersText = quizAnswersText();
+    const preliminaryText = preliminaryAnalysis
+        ? `Preliminary image-only match: ${preliminaryAnalysis.predicted_class || 'Unknown'} (${Number(preliminaryAnalysis.confidence || 0).toFixed(1)}% confidence).`
+        : '';
+    context.symptoms = [context.symptoms, `AI symptom quiz answers: ${answersText}`].filter(Boolean).join(' ');
+    context.extra_notes = [context.extra_notes, preliminaryText].filter(Boolean).join(' ');
+    lastPatientContext = context;
+
     analyzeBtn.disabled = true;
+    loadingTitle.textContent = 'Verifying with quiz answers';
+    loadingCopy.textContent = 'SkinAI is comparing the image result with your selected symptom options before showing the final result.';
     setStep('loading');
     try {
-        const uploadFile = await optimizeImageForUpload(selectedFile);
-        const formData = new FormData();
-        formData.append('file', uploadFile);
-        Object.entries(lastPatientContext).forEach(([key, value]) => formData.append(key, value));
-        const response = await fetch('/predict', { method:'POST', body:formData });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Analysis failed.');
+        const data = await runPrediction(lastPatientContext, true);
         lastAnalysis = data;
         lastPatientContext = data.patient_context || lastPatientContext;
         renderResult(data);
@@ -1412,6 +1597,8 @@ function newScreening() {
     resetImage();
     lastAnalysis = null;
     lastPatientContext = {};
+    preliminaryAnalysis = null;
+    generatedQuiz = null;
     chatUnlocked = false;
     chatLauncher.classList.remove('show');
     chatPopup.classList.remove('open');
@@ -1420,6 +1607,45 @@ function newScreening() {
     chatHistory.length = 0;
     chatMessages.innerHTML = '<div class="bubble assistant">Your AI doctor chat will unlock after the scan result. Then you can ask what to avoid, whether it can spread, or when to see a doctor.</div>';
     setStep('upload');
+}
+
+async function scanAndBuildQuiz() {
+    if (!selectedFile) {
+        alert('Please upload or capture a skin image first.');
+        return;
+    }
+    imageNextBtn.disabled = true;
+    loadingTitle.textContent = 'Scanning image first';
+    loadingCopy.textContent = 'SkinAI is detecting a preliminary skin condition from the photo, then generating a symptom quiz to verify it.';
+    setStep('loading');
+    try {
+        preliminaryAnalysis = await runPrediction({
+            body_location: '',
+            duration: '',
+            itching: 'Unknown',
+            pain: 'Unknown',
+            spreading: 'Unknown',
+            fever: 'Unknown',
+            symptoms: 'Preliminary image-only scan before symptom quiz.',
+            medicine_history: '',
+            extra_notes: 'Generate preliminary disease match before AI symptom quiz.',
+        }, false);
+
+        if (preliminaryAnalysis.invalid_image) {
+            lastAnalysis = preliminaryAnalysis;
+            renderResult(preliminaryAnalysis);
+            return;
+        }
+
+        generatedQuiz = await generateQuizFromAnalysis(preliminaryAnalysis);
+        renderQuiz(generatedQuiz, preliminaryAnalysis);
+        setStep('symptoms');
+    } catch (error) {
+        alert(error.message || 'Could not scan the image. Please try again.');
+        setStep('upload');
+    } finally {
+        imageNextBtn.disabled = false;
+    }
 }
 
 function openChat() {
@@ -1481,11 +1707,7 @@ async function sendChat() {
 }
 
 imageNextBtn.addEventListener('click', () => {
-    if (!selectedFile) {
-        alert('Please upload or capture a skin image first.');
-        return;
-    }
-    setStep('symptoms');
+    scanAndBuildQuiz();
 });
 clearSymptomsBtn.addEventListener('click', clearSymptoms);
 uploadZone.addEventListener('click', () => fileInput.click());
@@ -1512,6 +1734,10 @@ stepButtons.forEach(button => {
         const requested = button.dataset.stepButton;
         if (requested === 'symptoms' && !selectedFile) {
             alert('Please upload or capture a skin image first.');
+            return;
+        }
+        if (requested === 'symptoms' && !generatedQuiz) {
+            scanAndBuildQuiz();
             return;
         }
         if (requested === 'result' && !lastAnalysis) {
