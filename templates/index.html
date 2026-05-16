@@ -31,7 +31,7 @@
             color:var(--text);
             background:
                 linear-gradient(180deg, rgba(6,18,20,.76), rgba(6,18,20,.98) 62%, #061214),
-                url("{{ url_for('static', filename='background.jpg') }}") center/cover fixed;
+                url("{{ url_for('static', filename='background.jpg') }}") center/cover no-repeat;
             overflow-x:hidden;
         }
         body::before {
@@ -57,7 +57,7 @@
             padding:16px clamp(18px,4vw,72px);
             background:rgba(6,18,20,.78);
             border-bottom:1px solid var(--line);
-            backdrop-filter:blur(22px);
+            backdrop-filter:blur(12px);
         }
         .brand {
             display:flex;
@@ -571,6 +571,29 @@
             .hero { min-height:auto; }
             .journey { grid-template-columns:1fr; }
             .float-scan { width:58px; height:58px; right:16px; bottom:16px; border-radius:18px; }
+        }
+        @media(max-width:760px), (prefers-reduced-motion: reduce) {
+            html { scroll-behavior:auto; }
+            body::before { opacity:.45; }
+            .scan-line,
+            .bar span,
+            .float-scan {
+                animation:none;
+            }
+            .btn:hover,
+            .float-scan:hover {
+                transform:none;
+            }
+            .site-header {
+                backdrop-filter:none;
+                background:rgba(6,18,20,.94);
+            }
+            .console,
+            .feature-card,
+            .journey-card,
+            .cta-band {
+                box-shadow:0 18px 44px rgba(0,0,0,.22);
+            }
         }
     </style>
 </head>

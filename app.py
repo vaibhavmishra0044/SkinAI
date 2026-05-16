@@ -15,18 +15,6 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
-try:
-    from ai_edge_litert.interpreter import Interpreter
-    _TFLITE_OK = True
-except ImportError:
-    _TFLITE_OK = False
-
-try:
-    from transformers import pipeline as _hf_pipeline
-    _HF_TRANSFORMERS_OK = True
-except ImportError:
-    _HF_TRANSFORMERS_OK = False
-
 # ── App Setup ─────────────────────────────────────────────────────────────────
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY') or secrets.token_hex(32) # SQL ALCEHMY SECTRETE TOCKEN HEX 32 CONFIGER MANAGEMNET OF OGINN OF ID OF THE 
@@ -58,17 +46,11 @@ _tflite_interpreter = None
 _tflite_input_details = None
 _tflite_output_details = None
 CNN_RUNTIME = None
-
-if _TFLITE_OK and os.path.exists(tflite_model_path):
-    _tflite_interpreter = Interpreter(model_path=tflite_model_path)
-    _tflite_interpreter.allocate_tensors()
-    _tflite_input_details = _tflite_interpreter.get_input_details()
-    _tflite_output_details = _tflite_interpreter.get_output_details()
-    CNN_RUNTIME = "tflite"
-else:
-    from tensorflow.keras.models import load_model
-    cnn_model = load_model(keras_model_path)
-    CNN_RUNTIME = "keras"
+_CNN_LOAD_ERROR = None
+_LOCAL_MODEL_ENABLED = os.getenv(
+    'SKINAI_ENABLE_LOCAL_MODEL',
+    '0' if os.getenv('VERCEL') else '1',
+).strip().lower() in {'1', 'true', 'yes', 'on'}
 
 IMAGE_SIZE = (224, 224)
 
@@ -363,28 +345,83 @@ def preprocess_image(image_path):
 # Weights download once to E:\hf_cache (~90 MB) on first startup
 HF_MODEL_ID = "LaurianeMD/vit-skin-disease"
 _hf_clf = None
+_HF_LOAD_ERROR = None
 _HF_ENABLED = os.getenv('SKINAI_ENABLE_HF', '0' if os.getenv('VERCEL') else '1').strip().lower() in {'1', 'true', 'yes', 'on'}
+USE_LOCAL_FALLBACK = os.getenv(
+    'SKINAI_ENABLE_LOCAL_FALLBACK',
+    '0' if os.getenv('VERCEL') else '1',
+).strip().lower() in {'1', 'true', 'yes', 'on'}
 
-if _HF_TRANSFORMERS_OK and _HF_ENABLED:
+def _load_cnn_runtime():
+    global cnn_model, _tflite_interpreter, _tflite_input_details, _tflite_output_details
+    global CNN_RUNTIME, _CNN_LOAD_ERROR
+
+    if CNN_RUNTIME:
+        return CNN_RUNTIME
+    if _CNN_LOAD_ERROR:
+        return None
+    if not _LOCAL_MODEL_ENABLED:
+        _CNN_LOAD_ERROR = "Local CNN fallback is disabled for faster startup."
+        return None
+
     try:
+        if os.path.exists(tflite_model_path):
+            from ai_edge_litert.interpreter import Interpreter
+
+            _tflite_interpreter = Interpreter(model_path=tflite_model_path)
+            _tflite_interpreter.allocate_tensors()
+            _tflite_input_details = _tflite_interpreter.get_input_details()
+            _tflite_output_details = _tflite_interpreter.get_output_details()
+            CNN_RUNTIME = "tflite"
+        elif os.path.exists(keras_model_path):
+            from tensorflow.keras.models import load_model
+
+            cnn_model = load_model(keras_model_path)
+            CNN_RUNTIME = "keras"
+        else:
+            _CNN_LOAD_ERROR = "No local CNN model file is available."
+            return None
+    except Exception as exc:
+        _CNN_LOAD_ERROR = str(exc)
+        print(f"[SkinAI] Could not load local CNN fallback: {exc}")
+        return None
+
+    print(f"[SkinAI] local fallback model loaded with {CNN_RUNTIME}.")
+    return CNN_RUNTIME
+
+def _load_hf_pipeline():
+    global _hf_clf, _HF_LOAD_ERROR
+
+    if _hf_clf is not None:
+        return _hf_clf
+    if _HF_LOAD_ERROR:
+        return None
+    if not _HF_ENABLED:
+        _HF_LOAD_ERROR = "HuggingFace fallback is disabled."
+        return None
+
+    try:
+        from transformers import pipeline as hf_pipeline
+
         print(f"[SkinAI] Loading HuggingFace model '{HF_MODEL_ID}'...")
-        _hf_clf = _hf_pipeline(
+        _hf_clf = hf_pipeline(
             task="image-classification",
             model=HF_MODEL_ID,
             top_k=None,
             device=-1,
         )
         print("[SkinAI] optional local vision model loaded.")
-    except Exception as _e:
-        print(f"[SkinAI] Could not load HF model: {_e}")
+    except Exception as exc:
+        _HF_LOAD_ERROR = str(exc)
+        print(f"[SkinAI] Could not load HF model: {exc}")
         _hf_clf = None
-elif _HF_TRANSFORMERS_OK:
-    print("[SkinAI] optional local vision model disabled; using local fallback.")
-else:
-    print("[SkinAI] transformers not installed.")
+    return _hf_clf
 
 def run_hf_inference(image_path):
-    results = _hf_clf(image_path)   # list of {label, score}
+    clf = _load_hf_pipeline()
+    if clf is None:
+        raise RuntimeError(_HF_LOAD_ERROR or "HuggingFace fallback is unavailable.")
+    results = clf(image_path)   # list of {label, score}
     score_map = {}
     for r in results:
         key = normalize_hf_label(r['label'])
@@ -396,8 +433,11 @@ def run_hf_inference(image_path):
     return [{'class_key': k, 'confidence': round(v * 100, 1)} for k, v in sorted_items[:3]]
 
 def run_cnn_inference(image_path):
+    runtime = _load_cnn_runtime()
+    if runtime is None:
+        raise RuntimeError(_CNN_LOAD_ERROR or "Local CNN fallback is unavailable.")
     input_data = preprocess_image(image_path)
-    if CNN_RUNTIME == "tflite":
+    if runtime == "tflite":
         input_detail = _tflite_input_details[0]
         output_detail = _tflite_output_details[0]
         if input_data.dtype != input_detail['dtype']:
@@ -920,13 +960,20 @@ def predict():
                 model_used = "AI Vision Analysis"
             except Exception as e:
                 api_error = str(e)
-                top3_raw = run_cnn_inference(tmp.name)
-                model_used = "Limited Local Fallback"
-                fallback_warning = True
-        elif _hf_clf is not None:
+                if not USE_LOCAL_FALLBACK:
+                    return jsonify({'error': 'AI analysis service is temporarily slow or unavailable. Please try again in a minute.'}), 502
+                try:
+                    top3_raw = run_cnn_inference(tmp.name)
+                    model_used = "Limited Local Fallback"
+                    fallback_warning = True
+                except Exception as fallback_error:
+                    return jsonify({'error': f'AI analysis failed and local fallback is unavailable: {fallback_error}'}), 502
+        elif _load_hf_pipeline() is not None:
             top3_raw = run_hf_inference(tmp.name)
             model_used = "Local Vision Analysis"
         else:
+            if not USE_LOCAL_FALLBACK:
+                return jsonify({'error': 'AI analysis is not configured on this deployment.'}), 503
             top3_raw = run_cnn_inference(tmp.name)
             model_used = "Limited Local Fallback"
             fallback_warning = True

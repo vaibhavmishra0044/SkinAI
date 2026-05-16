@@ -8,4 +8,6 @@ __pycache__/
 instance/
 static/uploads/
 CNN1_trained_model.keras
+CNN1_trained_model.tflite
+background.jpg
 *.log
