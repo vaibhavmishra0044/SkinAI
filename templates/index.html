@@ -3,26 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkinAI - AI Skin Disease Screening</title>
+    <title>SkinAI - Guided Skin Screening</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --bg:#eef7f6;
+            --bg:#f3faf9;
             --panel:#ffffff;
-            --ink:#102027;
-            --muted:#667984;
-            --soft:#e8f3f2;
-            --line:#d6e5e3;
+            --ink:#0e252b;
+            --muted:#61777f;
+            --line:#dbe9e7;
             --teal:#0f9f8d;
-            --teal-2:#12bfa8;
+            --teal-2:#16c7b1;
             --blue:#2563eb;
-            --lime:#65a30d;
-            --amber:#d97706;
+            --coral:#fb7185;
+            --lime:#84cc16;
+            --amber:#f59e0b;
             --red:#dc2626;
-            --violet:#7c3aed;
-            --shadow:0 24px 70px rgba(15, 56, 61, .14);
-            --shadow-sm:0 10px 28px rgba(15, 56, 61, .10);
+            --soft-teal:#dcfdf7;
+            --soft-blue:#e0f2fe;
+            --soft-coral:#fff1f2;
+            --shadow:0 24px 70px rgba(15, 56, 61, .12);
+            --shadow-sm:0 10px 30px rgba(15, 56, 61, .08);
         }
         * { box-sizing:border-box; margin:0; padding:0; }
         html { scroll-behavior:smooth; }
@@ -31,25 +33,26 @@
             font-family:'Inter', system-ui, sans-serif;
             color:var(--ink);
             background:
-                radial-gradient(circle at top left, rgba(18,191,168,.18), transparent 34rem),
-                radial-gradient(circle at top right, rgba(37,99,235,.10), transparent 30rem),
-                linear-gradient(180deg, #f6fbfb 0%, var(--bg) 48%, #edf4f7 100%);
+                radial-gradient(circle at 8% 12%, rgba(22,199,177,.18), transparent 28rem),
+                radial-gradient(circle at 88% 8%, rgba(37,99,235,.12), transparent 26rem),
+                radial-gradient(circle at 86% 88%, rgba(251,113,133,.10), transparent 24rem),
+                linear-gradient(180deg, #fbffff 0%, var(--bg) 46%, #edf6f8 100%);
             overflow-x:hidden;
         }
         a { color:inherit; text-decoration:none; }
         button, input, textarea { font:inherit; }
+        button { cursor:pointer; }
         .topbar {
             position:sticky;
             top:0;
-            z-index:30;
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
+            z-index:40;
+            display:grid;
+            grid-template-columns:auto minmax(300px, 560px) auto;
             gap:18px;
-            min-height:74px;
-            padding:14px clamp(16px,4vw,56px);
-            background:rgba(246,251,251,.88);
-            border-bottom:1px solid rgba(214,229,227,.76);
+            align-items:center;
+            padding:14px clamp(16px,4vw,52px);
+            background:rgba(251,255,255,.90);
+            border-bottom:1px solid rgba(219,233,231,.86);
             backdrop-filter:blur(14px);
         }
         .brand {
@@ -59,52 +62,79 @@
             min-width:max-content;
         }
         .brand-mark {
-            width:48px;
-            height:48px;
+            width:46px;
+            height:46px;
             display:grid;
             place-items:center;
             border-radius:16px;
             color:white;
-            background:linear-gradient(135deg, var(--teal-2), #0d9488 58%, #2563eb);
-            box-shadow:0 14px 28px rgba(15,159,141,.22);
+            background:linear-gradient(135deg, var(--teal-2), var(--blue));
+            box-shadow:0 14px 32px rgba(15,159,141,.20);
         }
         .brand-name {
-            font-size:25px;
+            font-size:24px;
             font-weight:900;
             letter-spacing:0;
         }
         .brand-name span { color:var(--teal); }
         .brand-sub {
-            margin-top:2px;
             color:var(--muted);
             font-size:12px;
             font-weight:800;
         }
-        .nav {
-            display:flex;
-            align-items:center;
+        .stepper {
+            display:grid;
+            grid-template-columns:repeat(4, minmax(0,1fr));
             gap:8px;
             padding:6px;
-            border:1px solid rgba(214,229,227,.82);
+            border:1px solid var(--line);
             border-radius:999px;
-            background:rgba(255,255,255,.72);
+            background:white;
             box-shadow:var(--shadow-sm);
         }
-        .nav a {
-            padding:10px 14px;
-            border-radius:999px;
-            color:#536973;
-            font-size:13px;
-            font-weight:900;
-        }
-        .nav a:hover,
-        .nav a.active {
-            color:#063b36;
-            background:#dff7f3;
-        }
-        .actions {
+        .step-dot {
             display:flex;
             align-items:center;
+            justify-content:center;
+            gap:7px;
+            min-height:40px;
+            border:0;
+            border-radius:999px;
+            color:#627880;
+            background:transparent;
+            font-size:13px;
+            font-weight:900;
+            white-space:nowrap;
+        }
+        .step-dot span {
+            width:24px;
+            height:24px;
+            display:grid;
+            place-items:center;
+            border-radius:50%;
+            color:#507078;
+            background:#eef6f5;
+            font-size:12px;
+        }
+        .step-dot.active {
+            color:#06443f;
+            background:var(--soft-teal);
+        }
+        .step-dot.active span {
+            color:white;
+            background:var(--teal);
+        }
+        .step-dot.done {
+            color:#166534;
+        }
+        .step-dot.done span {
+            color:white;
+            background:var(--lime);
+        }
+        .top-actions {
+            display:flex;
+            align-items:center;
+            justify-content:flex-end;
             gap:10px;
             min-width:max-content;
         }
@@ -120,7 +150,6 @@
             color:#12323a;
             background:white;
             font-weight:900;
-            cursor:pointer;
             box-shadow:0 8px 22px rgba(15,56,61,.07);
             transition:transform .18s ease, box-shadow .18s ease, background .18s ease;
         }
@@ -129,401 +158,321 @@
             border-color:transparent;
             color:white;
             background:linear-gradient(135deg, var(--teal-2), var(--teal));
-            box-shadow:0 16px 36px rgba(15,159,141,.23);
+            box-shadow:0 15px 36px rgba(15,159,141,.22);
         }
         .btn-dark {
             color:white;
             border-color:#12323a;
             background:#12323a;
         }
-        .btn-warning {
+        .btn-soft {
             color:#7c3f00;
             border-color:#fed7aa;
             background:#fff7ed;
         }
-        .btn-icon {
-            width:44px;
-            padding:0;
+        .btn-ghost {
+            color:#405b63;
+            background:#f8fcfc;
+        }
+        .btn:disabled,
+        .icon-btn:disabled {
+            opacity:.55;
+            cursor:not-allowed;
+            transform:none;
+            box-shadow:none;
         }
         .page {
-            width:min(1440px, 100%);
+            width:min(1180px, 100%);
             margin:0 auto;
-            padding:26px clamp(16px,4vw,56px) 90px;
+            padding:34px clamp(14px,4vw,42px) 86px;
         }
-        .hero {
+        .shell {
             display:grid;
-            grid-template-columns:minmax(0, .86fr) minmax(0, 1.14fr);
-            gap:24px;
-            align-items:stretch;
+            grid-template-columns:minmax(0,1fr) 300px;
+            gap:20px;
+            align-items:start;
         }
-        .intro-panel {
-            position:relative;
-            overflow:hidden;
-            border:1px solid rgba(214,229,227,.85);
-            border-radius:28px;
-            padding:32px;
-            background:
-                linear-gradient(160deg, rgba(255,255,255,.94), rgba(244,251,250,.88)),
-                url("{{ url_for('static', filename='background.jpg') }}") center/cover;
+        .wizard {
+            min-height:650px;
+            border:1px solid rgba(219,233,231,.94);
+            border-radius:32px;
+            background:rgba(255,255,255,.94);
             box-shadow:var(--shadow);
+            overflow:hidden;
         }
-        .intro-panel::after {
-            content:"";
-            position:absolute;
-            inset:0;
-            pointer-events:none;
-            background:linear-gradient(90deg, rgba(255,255,255,.92), rgba(255,255,255,.72) 52%, rgba(255,255,255,.28));
+        .wizard-head {
+            display:flex;
+            align-items:flex-start;
+            justify-content:space-between;
+            gap:18px;
+            padding:26px 28px;
+            border-bottom:1px solid var(--line);
+            background:
+                linear-gradient(135deg, rgba(220,253,247,.78), rgba(224,242,254,.68)),
+                white;
         }
-        .intro-content { position:relative; z-index:1; }
-        .eyebrow {
+        .kicker {
             display:inline-flex;
             align-items:center;
             gap:8px;
             padding:8px 12px;
             border-radius:999px;
             color:#075e54;
-            background:#dcfdf7;
-            border:1px solid #bbf7e7;
-            font-size:13px;
+            background:white;
+            border:1px solid rgba(15,159,141,.18);
+            font-size:12px;
             font-weight:900;
         }
-        .intro-title {
-            margin-top:22px;
-            max-width:650px;
-            font-size:clamp(39px,5.4vw,76px);
-            line-height:1.02;
+        .wizard-title {
+            margin-top:13px;
+            font-size:clamp(28px,4vw,46px);
+            line-height:1.06;
             letter-spacing:0;
             font-weight:900;
         }
-        .intro-title span { color:var(--teal); }
-        .intro-copy {
-            margin-top:18px;
-            max-width:610px;
-            color:#536973;
-            font-size:17px;
-            line-height:1.72;
-            font-weight:600;
-        }
-        .hero-actions {
-            display:flex;
-            flex-wrap:wrap;
-            gap:12px;
-            margin-top:26px;
-        }
-        .trust-grid {
-            display:grid;
-            grid-template-columns:repeat(2, minmax(0, 1fr));
-            gap:12px;
-            margin-top:30px;
-        }
-        .trust-item {
-            display:flex;
-            gap:11px;
-            align-items:flex-start;
-            padding:14px;
-            border:1px solid rgba(214,229,227,.88);
-            border-radius:18px;
-            background:rgba(255,255,255,.72);
-        }
-        .trust-item i {
-            width:34px;
-            height:34px;
-            flex:0 0 auto;
-            display:grid;
-            place-items:center;
-            border-radius:12px;
-            color:#075e54;
-            background:#dff7f3;
-        }
-        .trust-item strong {
-            display:block;
-            font-size:14px;
-        }
-        .trust-item span {
-            display:block;
-            margin-top:3px;
+        .wizard-title span { color:var(--teal); }
+        .wizard-copy {
+            max-width:660px;
+            margin-top:10px;
             color:var(--muted);
-            font-size:12px;
-            line-height:1.45;
+            line-height:1.65;
+            font-size:15px;
             font-weight:700;
         }
-        .scan-workspace {
-            display:grid;
-            grid-template-columns:390px minmax(0, 1fr);
-            gap:16px;
-            min-height:680px;
-        }
-        .panel {
-            border:1px solid rgba(214,229,227,.92);
-            border-radius:26px;
-            background:rgba(255,255,255,.92);
-            box-shadow:var(--shadow);
-            overflow:hidden;
-        }
-        .panel-header {
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            gap:12px;
-            padding:18px 20px;
-            border-bottom:1px solid var(--line);
-            background:linear-gradient(135deg, rgba(220,253,247,.85), rgba(255,255,255,.86));
-        }
-        .panel-title {
-            display:flex;
-            align-items:center;
-            gap:10px;
-            font-weight:900;
-            color:#12323a;
-        }
-        .panel-title i { color:var(--teal); }
-        .panel-pill {
+        .stage-tag {
+            min-width:max-content;
             display:inline-flex;
             align-items:center;
-            gap:6px;
-            padding:6px 10px;
+            gap:8px;
+            padding:10px 13px;
             border-radius:999px;
-            color:#075e54;
-            background:#dcfdf7;
-            border:1px solid #bbf7e7;
-            font-size:12px;
-            font-weight:900;
-        }
-        .scan-form {
-            padding:18px;
-            display:grid;
-            gap:14px;
-        }
-        .upload-zone {
-            position:relative;
-            min-height:210px;
-            display:grid;
-            place-items:center;
-            padding:22px;
-            border:2px dashed #a5dcd5;
-            border-radius:22px;
-            color:#44636b;
-            text-align:center;
-            background:
-                linear-gradient(135deg, rgba(18,191,168,.08), rgba(37,99,235,.05)),
-                #fbffff;
-            cursor:pointer;
-            transition:border-color .18s ease, background .18s ease, transform .18s ease;
-        }
-        .upload-zone:hover,
-        .upload-zone.dragover {
-            transform:translateY(-1px);
-            border-color:var(--teal);
-            background:#f0fffc;
-        }
-        .upload-zone i {
-            font-size:38px;
-            color:var(--teal);
-            margin-bottom:12px;
-        }
-        .upload-zone strong {
-            display:block;
-            color:#12323a;
-            font-size:17px;
-        }
-        .upload-zone span {
-            display:block;
-            margin-top:6px;
+            color:#075985;
+            background:var(--soft-blue);
+            border:1px solid #bae6fd;
             font-size:13px;
-            font-weight:700;
-        }
-        #fileInput { display:none; }
-        .preview-card {
-            display:none;
-            border:1px solid var(--line);
-            border-radius:22px;
-            overflow:hidden;
-            background:#f8fcfc;
-        }
-        .preview-card img {
-            width:100%;
-            aspect-ratio:1.35;
-            object-fit:cover;
-            display:block;
-        }
-        .preview-meta {
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            gap:10px;
-            padding:11px 12px;
-            color:#5c727a;
-            font-size:12px;
-            font-weight:800;
-        }
-        .text-btn {
-            border:0;
-            background:none;
-            color:var(--teal);
             font-weight:900;
-            cursor:pointer;
         }
+        .step-panel {
+            display:none;
+            padding:28px;
+        }
+        .step-panel.active { display:block; }
         .form-grid {
             display:grid;
-            grid-template-columns:1fr 1fr;
-            gap:12px;
+            grid-template-columns:repeat(2, minmax(0,1fr));
+            gap:16px;
         }
-        .field { display:grid; gap:7px; }
+        .field {
+            display:grid;
+            gap:8px;
+        }
         .field.full { grid-column:1 / -1; }
         .field label,
         .field-label {
-            color:#40565f;
+            color:#425a63;
             font-size:12px;
             font-weight:900;
-            text-transform:uppercase;
             letter-spacing:.06em;
+            text-transform:uppercase;
         }
         .input,
         .textarea {
             width:100%;
             border:1px solid var(--line);
-            border-radius:14px;
-            padding:12px 13px;
+            border-radius:16px;
+            padding:13px 14px;
             color:#12323a;
             background:#fbffff;
             outline:none;
-            font-weight:700;
+            font-weight:750;
             transition:border-color .18s ease, box-shadow .18s ease, background .18s ease;
         }
-        .textarea { min-height:82px; resize:vertical; line-height:1.5; }
+        .textarea {
+            min-height:92px;
+            resize:vertical;
+            line-height:1.55;
+        }
         .input:focus,
         .textarea:focus {
-            border-color:rgba(15,159,141,.62);
+            border-color:rgba(15,159,141,.58);
             background:white;
             box-shadow:0 0 0 4px rgba(15,159,141,.10);
         }
         .check-grid {
             display:grid;
-            grid-template-columns:repeat(2, minmax(0,1fr));
-            gap:8px;
+            grid-template-columns:repeat(4, minmax(0,1fr));
+            gap:10px;
         }
-        .check-chip {
+        .check-card {
+            position:relative;
             display:flex;
             align-items:center;
-            gap:8px;
-            min-height:42px;
-            padding:10px 11px;
+            gap:10px;
+            min-height:58px;
+            padding:12px;
             border:1px solid var(--line);
-            border-radius:14px;
-            color:#40565f;
+            border-radius:18px;
+            color:#344c55;
             background:#fbffff;
             font-size:13px;
             font-weight:900;
-            cursor:pointer;
         }
-        .check-chip input { accent-color:var(--teal); }
-        .analyze-row {
+        .check-card input { accent-color:var(--teal); }
+        .actions-row {
+            display:flex;
+            justify-content:space-between;
+            gap:12px;
+            flex-wrap:wrap;
+            margin-top:24px;
+        }
+        .actions-row .right {
             display:flex;
             gap:10px;
-            align-items:center;
+            flex-wrap:wrap;
+            margin-left:auto;
         }
-        .analyze-row .btn { flex:1; }
-        .tiny-note {
-            display:flex;
-            gap:8px;
-            align-items:flex-start;
-            padding:12px;
-            border-radius:16px;
-            color:#536973;
-            background:#f4faf9;
-            border:1px solid var(--line);
-            font-size:12px;
-            line-height:1.45;
-            font-weight:700;
+        .upload-layout {
+            display:grid;
+            grid-template-columns:minmax(0,1fr) 260px;
+            gap:18px;
+            align-items:start;
         }
-        .tiny-note i { color:var(--amber); margin-top:2px; }
-        .result-panel {
-            min-width:0;
-            display:flex;
-            flex-direction:column;
-        }
-        .result-body {
-            flex:1;
-            padding:20px;
-            overflow:auto;
-        }
-        .empty-state {
-            min-height:570px;
+        .upload-zone {
+            min-height:390px;
             display:grid;
             place-items:center;
+            padding:30px;
+            border:2px dashed #a8ded7;
+            border-radius:26px;
             text-align:center;
-            color:#5c727a;
-            border:1px solid #e0eeec;
-            border-radius:22px;
+            color:#536973;
             background:
-                linear-gradient(90deg, rgba(15,159,141,.05) 1px, transparent 1px),
-                linear-gradient(180deg, rgba(15,159,141,.05) 1px, transparent 1px),
+                linear-gradient(135deg, rgba(22,199,177,.08), rgba(37,99,235,.05)),
                 #fbffff;
-            background-size:42px 42px;
+            cursor:pointer;
+            transition:transform .18s ease, border-color .18s ease, background .18s ease;
         }
-        .empty-state i {
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            transform:translateY(-2px);
+            border-color:var(--teal);
+            background:#f1fffc;
+        }
+        .upload-zone i {
             width:82px;
             height:82px;
             display:grid;
             place-items:center;
             margin:0 auto 18px;
-            border-radius:26px;
+            border-radius:28px;
             color:white;
             background:linear-gradient(135deg, var(--teal-2), var(--blue));
-            font-size:31px;
+            font-size:32px;
             box-shadow:0 20px 44px rgba(15,159,141,.20);
         }
-        .empty-state h2 {
+        .upload-zone strong {
+            display:block;
             color:#12323a;
-            font-size:28px;
-            margin-bottom:8px;
+            font-size:24px;
+            font-weight:900;
         }
-        .empty-state p {
-            max-width:470px;
-            line-height:1.7;
-            font-weight:700;
+        .upload-zone span {
+            display:block;
+            margin-top:8px;
+            font-size:14px;
+            font-weight:750;
         }
-        .loading-state {
+        #fileInput { display:none; }
+        .preview-card {
             display:none;
-            min-height:570px;
+            overflow:hidden;
+            border:1px solid var(--line);
+            border-radius:26px;
+            background:#fbffff;
+            box-shadow:0 16px 42px rgba(15,56,61,.08);
+        }
+        .preview-card img {
+            width:100%;
+            aspect-ratio:1.55;
+            object-fit:cover;
+            display:block;
+        }
+        .preview-meta {
+            display:flex;
+            justify-content:space-between;
+            gap:12px;
+            padding:12px 14px;
+            color:#536973;
+            font-size:13px;
+            font-weight:850;
+        }
+        .text-btn {
+            border:0;
+            color:var(--teal);
+            background:none;
+            font-weight:900;
+        }
+        .photo-tips {
+            display:grid;
+            gap:11px;
+            padding:17px;
+            border-radius:24px;
+            background:#ffffff;
+            border:1px solid var(--line);
+        }
+        .tip {
+            display:flex;
+            gap:10px;
+            color:#536973;
+            font-size:13px;
+            line-height:1.45;
+            font-weight:750;
+        }
+        .tip i {
+            margin-top:2px;
+            color:var(--teal);
+        }
+        .loading-card {
+            min-height:500px;
+            display:grid;
             place-items:center;
             text-align:center;
-            color:#536973;
         }
         .loader {
-            width:76px;
-            height:76px;
-            margin:0 auto 18px;
-            border:7px solid #dff7f3;
+            width:86px;
+            height:86px;
+            margin:0 auto 20px;
+            border:8px solid #dff7f3;
             border-top-color:var(--teal);
             border-radius:50%;
             animation:spin .8s linear infinite;
         }
         @keyframes spin { to { transform:rotate(360deg); } }
-        .loading-state h2 {
-            color:#12323a;
-            font-size:26px;
+        .loading-card h2 {
+            font-size:30px;
             margin-bottom:8px;
         }
-        .result-content { display:none; }
-        .diagnosis-hero {
-            border-radius:24px;
-            padding:22px;
+        .loading-card p {
+            color:var(--muted);
+            font-weight:750;
+            line-height:1.6;
+        }
+        .result-hero {
+            padding:24px;
+            border-radius:28px;
             color:white;
             background:
-                linear-gradient(135deg, rgba(7,95,87,.94), rgba(18,79,110,.92)),
+                linear-gradient(135deg, rgba(8,102,94,.96), rgba(23,78,119,.94)),
                 linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
-            box-shadow:0 24px 58px rgba(15,56,61,.20);
+            box-shadow:0 24px 58px rgba(15,56,61,.18);
         }
-        .diagnosis-top {
+        .result-top {
             display:flex;
-            align-items:center;
             justify-content:space-between;
             gap:12px;
             flex-wrap:wrap;
         }
-        .risk-chip,
-        .model-chip {
+        .chip {
             display:inline-flex;
             align-items:center;
             gap:7px;
@@ -533,20 +482,21 @@
             font-size:12px;
             font-weight:900;
             background:rgba(255,255,255,.14);
-            border:1px solid rgba(255,255,255,.18);
+            border:1px solid rgba(255,255,255,.20);
         }
-        .diagnosis-name {
+        .result-name {
             margin-top:18px;
-            font-size:clamp(28px,4vw,48px);
-            line-height:1.05;
+            font-size:clamp(31px,5vw,56px);
+            line-height:1.04;
             font-weight:900;
+            letter-spacing:0;
         }
-        .diagnosis-sub {
+        .result-summary {
+            max-width:820px;
             margin-top:10px;
-            max-width:830px;
-            color:rgba(255,255,255,.82);
+            color:rgba(255,255,255,.86);
             line-height:1.65;
-            font-weight:700;
+            font-weight:750;
         }
         .confidence-wrap { margin-top:18px; }
         .confidence-label {
@@ -561,50 +511,47 @@
             height:12px;
             overflow:hidden;
             border-radius:999px;
-            background:rgba(255,255,255,.20);
+            background:rgba(255,255,255,.22);
         }
         .confidence-fill {
-            width:0%;
             height:100%;
+            width:0%;
             border-radius:999px;
             background:linear-gradient(90deg, #bef264, #22d3ee);
             transition:width .6s ease;
         }
         .result-grid {
             display:grid;
-            grid-template-columns:minmax(0, .85fr) minmax(0, 1.15fr);
+            grid-template-columns:.86fr 1.14fr;
             gap:16px;
             margin-top:16px;
         }
-        .result-card {
+        .card {
             border:1px solid var(--line);
             border-radius:22px;
             padding:18px;
-            background:#ffffff;
+            background:#fff;
             box-shadow:0 10px 28px rgba(15,56,61,.06);
         }
         .card-title {
             display:flex;
             align-items:center;
             gap:8px;
-            color:#12323a;
-            font-size:14px;
-            font-weight:900;
             margin-bottom:14px;
-            text-transform:uppercase;
+            color:#12323a;
+            font-size:13px;
+            font-weight:900;
             letter-spacing:.05em;
+            text-transform:uppercase;
         }
         .card-title i { color:var(--teal); }
         .matches { display:grid; gap:12px; }
-        .match-row {
-            display:grid;
-            gap:8px;
-        }
+        .match-row { display:grid; gap:8px; }
         .match-head {
             display:flex;
             justify-content:space-between;
             gap:12px;
-            color:#30474f;
+            color:#334c54;
             font-size:13px;
             font-weight:900;
         }
@@ -617,15 +564,14 @@
         .match-bar span {
             display:block;
             height:100%;
-            width:0%;
             border-radius:999px;
             background:linear-gradient(90deg, var(--teal), #22d3ee);
-            transition:width .6s ease;
         }
         .details-grid {
             display:grid;
             grid-template-columns:repeat(2, minmax(0,1fr));
             gap:14px;
+            margin-top:16px;
         }
         .detail {
             border:1px solid #e0eeec;
@@ -638,12 +584,12 @@
             display:flex;
             align-items:center;
             gap:8px;
+            margin-bottom:8px;
             color:#57717a;
             font-size:12px;
             font-weight:900;
-            margin-bottom:8px;
-            text-transform:uppercase;
             letter-spacing:.05em;
+            text-transform:uppercase;
         }
         .detail-label i { color:var(--teal); }
         .detail p {
@@ -659,95 +605,91 @@
             margin-top:16px;
             padding:15px;
             border-radius:18px;
+            color:#7c3f00;
             background:#fff7ed;
             border:1px solid #fed7aa;
-            color:#7c3f00;
             font-size:13px;
             line-height:1.55;
             font-weight:750;
         }
         .alert i { margin-top:3px; color:var(--amber); }
-        .result-actions {
-            display:flex;
-            gap:10px;
-            flex-wrap:wrap;
-            margin-top:16px;
-        }
-        .feature-band {
+        .side-panel {
+            position:sticky;
+            top:100px;
             display:grid;
-            grid-template-columns:repeat(4, minmax(0,1fr));
             gap:14px;
-            margin-top:22px;
         }
-        .feature-tile {
-            padding:17px;
-            border:1px solid rgba(214,229,227,.9);
-            border-radius:22px;
-            background:rgba(255,255,255,.76);
-            box-shadow:0 10px 28px rgba(15,56,61,.06);
+        .mini-card {
+            border:1px solid var(--line);
+            border-radius:24px;
+            padding:18px;
+            background:rgba(255,255,255,.90);
+            box-shadow:var(--shadow-sm);
         }
-        .feature-tile i {
-            width:38px;
-            height:38px;
-            display:grid;
-            place-items:center;
-            border-radius:14px;
-            color:#075e54;
-            background:#dff7f3;
-        }
-        .feature-tile strong {
-            display:block;
-            margin-top:12px;
+        .mini-title {
+            display:flex;
+            align-items:center;
+            gap:8px;
             color:#12323a;
+            font-size:14px;
+            font-weight:900;
+            margin-bottom:11px;
         }
-        .feature-tile span {
-            display:block;
-            margin-top:5px;
+        .mini-title i { color:var(--teal); }
+        .mini-card p,
+        .mini-card li {
             color:var(--muted);
             font-size:13px;
-            line-height:1.5;
-            font-weight:700;
+            line-height:1.55;
+            font-weight:750;
         }
+        .mini-card ul {
+            display:grid;
+            gap:8px;
+            padding-left:18px;
+        }
+        .status-list { display:grid; gap:10px; }
+        .status-item {
+            display:flex;
+            align-items:center;
+            gap:9px;
+            color:#536973;
+            font-size:13px;
+            font-weight:850;
+        }
+        .status-item i { color:#94a3b8; }
+        .status-item.done i { color:var(--lime); }
+        .status-item.active i { color:var(--teal); }
         .chat-launcher {
             position:fixed;
             right:24px;
             bottom:24px;
             z-index:60;
-            width:66px;
-            height:66px;
-            display:grid;
-            place-items:center;
+            display:none;
+            align-items:center;
+            gap:9px;
+            min-height:54px;
+            padding:0 18px;
             border:0;
-            border-radius:23px;
+            border-radius:999px;
             color:white;
             background:linear-gradient(135deg, var(--teal-2), var(--blue));
-            box-shadow:0 22px 55px rgba(15,159,141,.34);
-            cursor:pointer;
-            font-size:24px;
+            box-shadow:0 22px 55px rgba(15,159,141,.30);
+            font-weight:900;
         }
-        .chat-launcher::after {
-            content:"";
-            position:absolute;
-            right:5px;
-            bottom:5px;
-            width:15px;
-            height:15px;
-            border-radius:50%;
-            background:#22c55e;
-            border:3px solid white;
-        }
+        .chat-launcher.show { display:inline-flex; }
         .chat-popup {
             position:fixed;
             right:24px;
-            bottom:102px;
+            bottom:92px;
             z-index:70;
             width:min(410px, calc(100vw - 32px));
             height:600px;
-            max-height:calc(100vh - 126px);
+            max-height:calc(100vh - 122px);
             display:none;
             flex-direction:column;
             overflow:hidden;
-            border:1px solid rgba(214,229,227,.95);
+            border:1px solid rgba(219,233,231,.95);
             border-radius:28px;
             background:white;
             box-shadow:0 30px 90px rgba(15,56,61,.24);
@@ -768,14 +710,13 @@
             gap:10px;
             font-weight:900;
         }
-        .chat-close {
+        .icon-btn {
             width:36px;
             height:36px;
-            border:1px solid rgba(255,255,255,.22);
+            border:1px solid rgba(255,255,255,.24);
             border-radius:12px;
             color:white;
             background:rgba(255,255,255,.12);
-            cursor:pointer;
         }
         .chat-note {
             padding:11px 14px;
@@ -839,59 +780,65 @@
             border-radius:16px;
             color:white;
             background:linear-gradient(135deg, var(--teal-2), var(--teal));
-            cursor:pointer;
         }
-        .send-chat:disabled,
-        .btn:disabled {
-            opacity:.62;
-            cursor:not-allowed;
-            transform:none;
-            box-shadow:none;
-        }
-        @media(max-width:1180px) {
-            .hero,
-            .scan-workspace {
-                grid-template-columns:1fr;
-            }
-            .scan-workspace { min-height:auto; }
-            .intro-panel { min-height:auto; }
-        }
-        @media(max-width:860px) {
+        @media(max-width:1020px) {
             .topbar {
-                align-items:flex-start;
-                flex-direction:column;
-            }
-            .nav { width:100%; overflow:auto; justify-content:flex-start; }
-            .actions { width:100%; flex-wrap:wrap; }
-            .actions .btn { flex:1; }
-            .trust-grid,
-            .feature-band,
-            .result-grid,
-            .details-grid {
                 grid-template-columns:1fr;
             }
-            .detail.full { grid-column:auto; }
-            .form-grid { grid-template-columns:1fr; }
-        }
-        @media(max-width:560px) {
-            .page { padding-inline:12px; }
-            .intro-panel,
-            .panel {
-                border-radius:20px;
+            .stepper { order:3; }
+            .top-actions { justify-content:flex-start; flex-wrap:wrap; }
+            .shell {
+                grid-template-columns:1fr;
             }
-            .intro-panel { padding:22px; }
-            .panel-header { align-items:flex-start; flex-direction:column; }
-            .check-grid { grid-template-columns:1fr; }
-            .analyze-row { flex-direction:column; }
-            .analyze-row .btn { width:100%; }
+            .side-panel {
+                position:static;
+                grid-template-columns:repeat(2, minmax(0,1fr));
+            }
+        }
+        @media(max-width:760px) {
+            .topbar { padding:12px; }
+            .stepper {
+                overflow:auto;
+                border-radius:18px;
+                grid-template-columns:repeat(4, max-content);
+                justify-content:flex-start;
+            }
+            .step-dot { padding:0 12px; }
+            .top-actions .btn { flex:1; }
+            .page { padding:18px 12px 92px; }
+            .wizard {
+                min-height:auto;
+                border-radius:24px;
+            }
+            .wizard-head {
+                flex-direction:column;
+                padding:22px;
+            }
+            .step-panel { padding:20px; }
+            .form-grid,
+            .check-grid,
+            .upload-layout,
+            .result-grid,
+            .details-grid,
+            .side-panel {
+                grid-template-columns:1fr;
+            }
+            .upload-zone { min-height:300px; }
+            .actions-row,
+            .actions-row .right {
+                flex-direction:column;
+                width:100%;
+            }
+            .actions-row .btn { width:100%; }
+            .detail.full { grid-column:auto; }
             .chat-launcher {
-                right:16px;
-                bottom:16px;
+                right:14px;
+                bottom:14px;
             }
             .chat-popup {
-                right:10px;
                 left:10px;
-                bottom:92px;
+                right:10px;
+                bottom:82px;
                 width:auto;
             }
         }
@@ -910,256 +857,239 @@
         <div class="brand-mark"><i class="fas fa-microscope"></i></div>
         <div>
             <div class="brand-name">Skin<span>AI</span></div>
-            <div class="brand-sub">AI skin screening workspace</div>
+            <div class="brand-sub">Guided skin screening</div>
         </div>
     </a>
-    <nav class="nav" aria-label="Primary navigation">
-        <a class="active" href="#scanner">Scan</a>
-        <a href="#results">Results</a>
-        <a href="#features">Features</a>
-        <a href="#" id="openChatLink">AI Chat</a>
-    </nav>
-    <div class="actions">
+
+    <div class="stepper" aria-label="Screening progress">
+        <button class="step-dot active" type="button" data-step-button="symptoms"><span>1</span> Symptoms</button>
+        <button class="step-dot" type="button" data-step-button="upload"><span>2</span> Scan</button>
+        <button class="step-dot" type="button" data-step-button="result"><span>3</span> Result</button>
+        <button class="step-dot" type="button" data-step-button="chatReady"><span>4</span> AI Chat</button>
+    </div>
+
+    <div class="top-actions">
         {% if current_user.is_authenticated and current_user.is_admin %}
-            <a class="btn btn-warning" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-user-shield"></i> Admin Panel</a>
+            <a class="btn btn-soft" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-user-shield"></i> Admin Panel</a>
         {% else %}
-            <a class="btn btn-warning" href="{{ url_for('login') }}"><i class="fas fa-user-shield"></i> Admin Login</a>
+            <a class="btn btn-soft" href="{{ url_for('login') }}"><i class="fas fa-user-shield"></i> Admin Login</a>
         {% endif %}
         {% if current_user.is_authenticated %}
             <a class="btn" href="{{ url_for('dashboard') }}"><i class="fas fa-chart-line"></i> Dashboard</a>
         {% else %}
             <a class="btn" href="{{ url_for('login') }}"><i class="fas fa-right-to-bracket"></i> Sign In</a>
         {% endif %}
-        <a class="btn btn-primary" href="#scanner"><i class="fas fa-camera"></i> Scan Now</a>
     </div>
 </header>
 
 <main class="page">
-    <section class="hero" id="scanner">
-        <div class="intro-panel">
-            <div class="intro-content">
-                <div class="eyebrow"><i class="fas fa-sparkles"></i> Upload photo, add symptoms, ask AI</div>
-                <h1 class="intro-title">Skin disease screening on the <span>same page.</span></h1>
-                <p class="intro-copy">
-                    Upload a clear photo, add body part, duration, itching, pain, spreading, fever and medicine history. SkinAI uses image plus symptoms together and gives condition details, safety advice and follow-up chat.
-                </p>
-                <div class="hero-actions">
-                    <a class="btn btn-primary" href="#scanCard"><i class="fas fa-cloud-arrow-up"></i> Upload Image</a>
-                    <button class="btn btn-dark" type="button" id="heroChatBtn"><i class="fas fa-comment-medical"></i> Open AI Doctor Chat</button>
+    <div class="shell">
+        <section class="wizard">
+            <div class="wizard-head">
+                <div>
+                    <div class="kicker"><i class="fas fa-route"></i> Guided pipeline</div>
+                    <h1 class="wizard-title" id="wizardTitle">Tell us what you <span>feel.</span></h1>
+                    <p class="wizard-copy" id="wizardCopy">Start with symptoms and context. Then SkinAI will ask for a clear skin image, analyze both together, and unlock result-aware AI doctor chat.</p>
                 </div>
-                <div class="trust-grid">
-                    <div class="trust-item">
-                        <i class="fas fa-image"></i>
-                        <div><strong>Photo first</strong><span>Works best with a close, bright, focused image of one affected area.</span></div>
+                <div class="stage-tag" id="stageTag"><i class="fas fa-clipboard-question"></i> Step 1 of 4</div>
+            </div>
+
+            <section class="step-panel active" data-step-panel="symptoms">
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="bodyLocation">Body Area</label>
+                        <input class="input" id="bodyLocation" type="text" placeholder="e.g. arm, neck, face, scalp">
                     </div>
-                    <div class="trust-item">
-                        <i class="fas fa-notes-medical"></i>
-                        <div><strong>Symptoms included</strong><span>Location, duration, itch, pain, fever and treatment history go with the image.</span></div>
+                    <div class="field">
+                        <label for="durationInput">Duration</label>
+                        <input class="input" id="durationInput" type="text" placeholder="e.g. 3 days, 2 weeks">
                     </div>
-                    <div class="trust-item">
-                        <i class="fas fa-list-check"></i>
-                        <div><strong>Detailed result</strong><span>Possible match, similar conditions, care options, prevention and red flags.</span></div>
+                    <div class="field full">
+                        <span class="field-label">What do you feel?</span>
+                        <div class="check-grid">
+                            <label class="check-card"><input type="checkbox" id="itchingInput"> Itching</label>
+                            <label class="check-card"><input type="checkbox" id="painInput"> Pain or burning</label>
+                            <label class="check-card"><input type="checkbox" id="spreadingInput"> Spreading</label>
+                            <label class="check-card"><input type="checkbox" id="feverInput"> Fever</label>
+                        </div>
                     </div>
-                    <div class="trust-item">
-                        <i class="fas fa-shield-heart"></i>
-                        <div><strong>Safer guidance</strong><span>Educational screening only, with clear advice on when to see a doctor.</span></div>
+                    <div class="field full">
+                        <label for="symptomsInput">Describe the skin problem</label>
+                        <textarea class="textarea" id="symptomsInput" placeholder="Example: round red patch, scaling, pus, bleeding, swelling, color change, itching at night..."></textarea>
                     </div>
+                    <div class="field full">
+                        <label for="medicineHistory">Medicine or treatment history</label>
+                        <textarea class="textarea" id="medicineHistory" placeholder="Creams, tablets, home remedies, allergies, current medicines..."></textarea>
+                    </div>
+                    <div class="field full">
+                        <label for="extraNotes">Other useful notes</label>
+                        <textarea class="textarea" id="extraNotes" placeholder="Animal contact, new soap/cosmetics, diabetes, pregnancy, immune problems, travel, similar rash in family..."></textarea>
+                    </div>
+                </div>
+                <div class="actions-row">
+                    <button class="btn btn-ghost" type="button" id="clearSymptomsBtn"><i class="fas fa-eraser"></i> Clear</button>
+                    <div class="right">
+                        <button class="btn btn-primary" type="button" id="symptomsNextBtn">Next: Upload Image <i class="fas fa-arrow-right"></i></button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="step-panel" data-step-panel="upload">
+                <div class="upload-layout">
+                    <div>
+                        <div class="upload-zone" id="uploadZone">
+                            <div>
+                                <i class="fas fa-cloud-arrow-up"></i>
+                                <strong>Upload or capture skin image</strong>
+                                <span>Use a close, bright, focused photo of one affected skin area.</span>
+                                <span>JPG, PNG or WebP, max 10 MB.</span>
+                            </div>
+                            <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp">
+                        </div>
+                        <div class="preview-card" id="previewCard">
+                            <img id="previewImg" alt="Uploaded skin preview">
+                            <div class="preview-meta">
+                                <span id="fileInfo">Image ready</span>
+                                <button class="text-btn" type="button" id="changePhotoBtn">Change photo</button>
+                            </div>
+                        </div>
+                    </div>
+                    <aside class="photo-tips">
+                        <div class="tip"><i class="fas fa-check-circle"></i><span>Fill the frame with the affected area.</span></div>
+                        <div class="tip"><i class="fas fa-check-circle"></i><span>Use daylight or a bright lamp.</span></div>
+                        <div class="tip"><i class="fas fa-check-circle"></i><span>Avoid filters, blur, glare and shadows.</span></div>
+                        <div class="tip"><i class="fas fa-check-circle"></i><span>Capture one rash, spot or patch at a time.</span></div>
+                    </aside>
+                </div>
+                <div class="actions-row">
+                    <button class="btn btn-ghost" type="button" data-back-to="symptoms"><i class="fas fa-arrow-left"></i> Back</button>
+                    <div class="right">
+                        <button class="btn" type="button" id="resetImageBtn"><i class="fas fa-rotate-left"></i> Reset Image</button>
+                        <button class="btn btn-primary" id="analyzeBtn" type="button"><i class="fas fa-brain"></i> Analyze Skin</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="step-panel" data-step-panel="loading">
+                <div class="loading-card">
+                    <div>
+                        <div class="loader"></div>
+                        <h2>Analyzing your scan</h2>
+                        <p>SkinAI is combining your photo with symptoms and asking the AI vision model for a structured result.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="step-panel" data-step-panel="result">
+                <div class="result-hero">
+                    <div class="result-top">
+                        <span class="chip" id="riskChip"><i class="fas fa-shield-virus"></i> Risk</span>
+                        <span class="chip" id="modelChip"><i class="fas fa-microchip"></i> AI Vision Analysis</span>
+                    </div>
+                    <div class="result-name" id="resultName">Condition name</div>
+                    <p class="result-summary" id="resultSummary">Condition summary will appear here.</p>
+                    <div class="confidence-wrap">
+                        <div class="confidence-label">
+                            <span>Confidence</span>
+                            <span id="confidenceText">0%</span>
+                        </div>
+                        <div class="confidence-track"><div class="confidence-fill" id="confidenceFill"></div></div>
+                    </div>
+                </div>
+
+                <div class="alert" id="warningBox">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    <div>This is educational AI screening, not a final diagnosis. A qualified dermatologist can confirm the condition.</div>
+                </div>
+
+                <div class="result-grid">
+                    <div class="card">
+                        <div class="card-title"><i class="fas fa-chart-simple"></i> Top Possible Matches</div>
+                        <div class="matches" id="matchesList"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title"><i class="fas fa-eye"></i> Visible Signs</div>
+                        <div class="detail full" style="border:0;padding:0;background:transparent;">
+                            <p id="visualFindings">Visible findings appear here.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="details-grid" id="detailsGrid"></div>
+
+                <div class="actions-row">
+                    <button class="btn btn-ghost" type="button" data-back-to="upload"><i class="fas fa-arrow-left"></i> Back to Image</button>
+                    <div class="right">
+                        <button class="btn" type="button" id="newScanBtn"><i class="fas fa-rotate-left"></i> New Screening</button>
+                        <button class="btn btn-dark" type="button" id="askDoctorBtn"><i class="fas fa-comment-medical"></i> Ask AI Doctor</button>
+                    </div>
+                </div>
+            </section>
+        </section>
+
+        <aside class="side-panel" aria-label="Screening guidance">
+            <div class="mini-card">
+                <div class="mini-title"><i class="fas fa-location-arrow"></i> Current Progress</div>
+                <div class="status-list">
+                    <div class="status-item active" data-status="symptoms"><i class="fas fa-circle"></i> Symptoms entered</div>
+                    <div class="status-item" data-status="upload"><i class="fas fa-circle"></i> Image uploaded</div>
+                    <div class="status-item" data-status="result"><i class="fas fa-circle"></i> Result generated</div>
+                    <div class="status-item" data-status="chatReady"><i class="fas fa-circle"></i> AI chat unlocked</div>
                 </div>
             </div>
-        </div>
-
-        <div class="scan-workspace">
-            <section class="panel" id="scanCard">
-                <div class="panel-header">
-                    <div class="panel-title"><i class="fas fa-camera-retro"></i> Skin Scan</div>
-                    <span class="panel-pill"><i class="fas fa-wand-magic-sparkles"></i> AI Vision</span>
-                </div>
-                <div class="scan-form">
-                    <div class="upload-zone" id="uploadZone">
-                        <div>
-                            <i class="fas fa-cloud-arrow-up"></i>
-                            <strong>Click or drop skin image</strong>
-                            <span>JPG, PNG or WebP, max 10 MB</span>
-                        </div>
-                        <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp">
-                    </div>
-
-                    <div class="preview-card" id="previewCard">
-                        <img id="previewImg" alt="Uploaded skin preview">
-                        <div class="preview-meta">
-                            <span id="fileInfo">Image ready</span>
-                            <button class="text-btn" type="button" id="changePhotoBtn">Change</button>
-                        </div>
-                    </div>
-
-                    <div class="form-grid">
-                        <div class="field">
-                            <label for="bodyLocation">Body Area</label>
-                            <input class="input" id="bodyLocation" type="text" placeholder="Arm, face, scalp">
-                        </div>
-                        <div class="field">
-                            <label for="durationInput">Duration</label>
-                            <input class="input" id="durationInput" type="text" placeholder="3 days, 2 weeks">
-                        </div>
-                        <div class="field full">
-                            <span class="field-label">Symptoms</span>
-                            <div class="check-grid">
-                                <label class="check-chip"><input type="checkbox" id="itchingInput"> Itching</label>
-                                <label class="check-chip"><input type="checkbox" id="painInput"> Pain or burning</label>
-                                <label class="check-chip"><input type="checkbox" id="spreadingInput"> Spreading</label>
-                                <label class="check-chip"><input type="checkbox" id="feverInput"> Fever</label>
-                            </div>
-                        </div>
-                        <div class="field full">
-                            <label for="symptomsInput">Other Symptoms</label>
-                            <textarea class="textarea" id="symptomsInput" placeholder="Scaling, pus, bleeding, swelling, color change..."></textarea>
-                        </div>
-                        <div class="field full">
-                            <label for="medicineHistory">Medicine or Treatment History</label>
-                            <textarea class="textarea" id="medicineHistory" placeholder="Creams, tablets, allergies, home remedies, current medicines..."></textarea>
-                        </div>
-                        <div class="field full">
-                            <label for="extraNotes">Other Notes</label>
-                            <textarea class="textarea" id="extraNotes" placeholder="Animal contact, new soap, diabetes, pregnancy, immune problems..."></textarea>
-                        </div>
-                    </div>
-
-                    <div class="analyze-row">
-                        <button class="btn btn-primary" id="analyzeBtn" type="button"><i class="fas fa-brain"></i> Analyze Skin</button>
-                        <button class="btn" id="resetBtn" type="button"><i class="fas fa-rotate-left"></i> Reset</button>
-                    </div>
-                    <div class="tiny-note">
-                        <i class="fas fa-circle-info"></i>
-                        <span>For best results, crop tightly around the affected skin area. Do not upload identity documents or private information.</span>
-                    </div>
-                </div>
-            </section>
-
-            <section class="panel result-panel" id="results">
-                <div class="panel-header">
-                    <div class="panel-title"><i class="fas fa-file-medical"></i> Analysis Result</div>
-                    <span class="panel-pill" id="modelBadge"><i class="fas fa-brain"></i> Ready</span>
-                </div>
-                <div class="result-body">
-                    <div class="empty-state" id="emptyState">
-                        <div>
-                            <i class="fas fa-magnifying-glass-plus"></i>
-                            <h2>Ready for a scan</h2>
-                            <p>Upload a focused skin image and add symptoms. Your result will appear here with possible matches, care options and safety guidance.</p>
-                        </div>
-                    </div>
-                    <div class="loading-state" id="loadingState">
-                        <div>
-                            <div class="loader"></div>
-                            <h2>Analyzing image</h2>
-                            <p>Compressing the photo, reading symptoms and asking the AI vision model.</p>
-                        </div>
-                    </div>
-                    <div class="result-content" id="resultContent">
-                        <div class="diagnosis-hero">
-                            <div class="diagnosis-top">
-                                <span class="risk-chip" id="riskChip"><i class="fas fa-shield-virus"></i> Risk</span>
-                                <span class="model-chip" id="modelChip"><i class="fas fa-microchip"></i> AI Vision</span>
-                            </div>
-                            <div class="diagnosis-name" id="diagnosisName">Condition name</div>
-                            <p class="diagnosis-sub" id="diagnosisSummary">Condition summary appears here.</p>
-                            <div class="confidence-wrap">
-                                <div class="confidence-label">
-                                    <span>Confidence</span>
-                                    <span id="confidenceText">0%</span>
-                                </div>
-                                <div class="confidence-track"><div class="confidence-fill" id="confidenceFill"></div></div>
-                            </div>
-                        </div>
-
-                        <div class="alert" id="warningBox">
-                            <i class="fas fa-triangle-exclamation"></i>
-                            <div>This tool is educational screening, not a final medical diagnosis. A dermatologist can confirm the condition.</div>
-                        </div>
-
-                        <div class="result-grid">
-                            <div class="result-card">
-                                <div class="card-title"><i class="fas fa-chart-simple"></i> Top Possible Matches</div>
-                                <div class="matches" id="matchesList"></div>
-                            </div>
-                            <div class="result-card">
-                                <div class="card-title"><i class="fas fa-eye"></i> Visible Signs</div>
-                                <div class="detail full" style="border:0;padding:0;background:transparent;">
-                                    <p id="visualFindings">No visible signs yet.</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="result-card" style="margin-top:16px;">
-                            <div class="card-title"><i class="fas fa-notes-medical"></i> Condition Details</div>
-                            <div class="details-grid" id="detailsGrid"></div>
-                        </div>
-
-                        <div class="result-actions" id="resultActions"></div>
-                    </div>
-                </div>
-            </section>
-        </div>
-    </section>
-
-    <section class="feature-band" id="features">
-        <div class="feature-tile">
-            <i class="fas fa-camera"></i>
-            <strong>Same-page scan</strong>
-            <span>No admin panel needed for users. Upload and analyze directly from the first screen.</span>
-        </div>
-        <div class="feature-tile">
-            <i class="fas fa-clipboard-question"></i>
-            <strong>Smart questions</strong>
-            <span>Body part, duration, itching, pain, spreading, fever and medicines improve context.</span>
-        </div>
-        <div class="feature-tile">
-            <i class="fas fa-comment-medical"></i>
-            <strong>AI Doctor Chat</strong>
-            <span>Ask follow-up questions in a popup using the latest scan and symptoms.</span>
-        </div>
-        <div class="feature-tile">
-            <i class="fas fa-user-shield"></i>
-            <strong>Admin separate</strong>
-            <span>Login and admin controls stay available without blocking public scanning.</span>
-        </div>
-    </section>
+            <div class="mini-card">
+                <div class="mini-title"><i class="fas fa-lightbulb"></i> What helps accuracy</div>
+                <ul>
+                    <li>Use a clear close-up image.</li>
+                    <li>Add body part and duration.</li>
+                    <li>Mention itching, pain, spreading or fever.</li>
+                    <li>Tell us if any cream or medicine was used.</li>
+                </ul>
+            </div>
+            <div class="mini-card">
+                <div class="mini-title"><i class="fas fa-triangle-exclamation"></i> Urgent care signs</div>
+                <p>Seek urgent help for trouble breathing, fast swelling, high fever, severe pain, spreading infection, eye involvement, or genital rash.</p>
+            </div>
+        </aside>
+    </div>
 </main>
 
-<button class="chat-launcher" id="chatLauncher" type="button" title="Open AI Doctor Chat">
-    <i class="fas fa-comment-medical"></i>
+<button class="chat-launcher" id="chatLauncher" type="button">
+    <i class="fas fa-comment-medical"></i> Ask AI Doctor
 </button>
 
 <aside class="chat-popup" id="chatPopup" aria-label="AI Doctor Chat">
     <div class="chat-head">
         <div class="chat-title"><i class="fas fa-user-doctor"></i> AI Doctor Chat</div>
-        <button class="chat-close" id="chatClose" type="button" title="Close"><i class="fas fa-xmark"></i></button>
+        <button class="icon-btn" id="chatClose" type="button" title="Close"><i class="fas fa-xmark"></i></button>
     </div>
     <div class="chat-note">
-        Educational guidance only. Seek urgent care for fever, severe pain, pus, fast spreading rash, eye/genital involvement, breathing trouble or sudden swelling.
+        Chat uses your latest scan result and symptoms. It is educational guidance only, not a prescription or diagnosis.
     </div>
     <div class="chat-messages" id="chatMessages">
-        <div class="bubble assistant">Upload a photo and symptoms, then ask questions like "What should I avoid?", "Can it spread?", or "When should I see a doctor?"</div>
+        <div class="bubble assistant">Your AI doctor chat will unlock after the scan result. Then you can ask what to avoid, whether it can spread, or when to see a doctor.</div>
     </div>
     <div class="chat-input-row">
-        <textarea id="chatInput" placeholder="Ask about your skin result..."></textarea>
-        <button class="send-chat" id="sendChatBtn" type="button" title="Send"><i class="fas fa-paper-plane"></i></button>
+        <textarea id="chatInput" placeholder="Ask about your result..." disabled></textarea>
+        <button class="send-chat" id="sendChatBtn" type="button" title="Send" disabled><i class="fas fa-paper-plane"></i></button>
     </div>
 </aside>
 
 <script>
-const uploadZone = document.getElementById('uploadZone');
-const fileInput = document.getElementById('fileInput');
-const previewCard = document.getElementById('previewCard');
-const previewImg = document.getElementById('previewImg');
-const fileInfo = document.getElementById('fileInfo');
-const changePhotoBtn = document.getElementById('changePhotoBtn');
-const analyzeBtn = document.getElementById('analyzeBtn');
-const resetBtn = document.getElementById('resetBtn');
-const emptyState = document.getElementById('emptyState');
-const loadingState = document.getElementById('loadingState');
-const resultContent = document.getElementById('resultContent');
-const modelBadge = document.getElementById('modelBadge');
+const stepOrder = ['symptoms', 'upload', 'result', 'chatReady'];
+let currentStep = 'symptoms';
+let selectedFile = null;
+let lastAnalysis = null;
+let lastPatientContext = {};
+let chatUnlocked = false;
+const chatHistory = [];
+
+const wizardTitle = document.getElementById('wizardTitle');
+const wizardCopy = document.getElementById('wizardCopy');
+const stageTag = document.getElementById('stageTag');
+const stepPanels = document.querySelectorAll('[data-step-panel]');
+const stepButtons = document.querySelectorAll('[data-step-button]');
+const statusItems = document.querySelectorAll('[data-status]');
 const bodyLocation = document.getElementById('bodyLocation');
 const durationInput = document.getElementById('durationInput');
 const itchingInput = document.getElementById('itchingInput');
@@ -1169,24 +1099,85 @@ const feverInput = document.getElementById('feverInput');
 const symptomsInput = document.getElementById('symptomsInput');
 const medicineHistory = document.getElementById('medicineHistory');
 const extraNotes = document.getElementById('extraNotes');
-const chatPopup = document.getElementById('chatPopup');
+const clearSymptomsBtn = document.getElementById('clearSymptomsBtn');
+const symptomsNextBtn = document.getElementById('symptomsNextBtn');
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+const previewCard = document.getElementById('previewCard');
+const previewImg = document.getElementById('previewImg');
+const fileInfo = document.getElementById('fileInfo');
+const changePhotoBtn = document.getElementById('changePhotoBtn');
+const resetImageBtn = document.getElementById('resetImageBtn');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const newScanBtn = document.getElementById('newScanBtn');
+const askDoctorBtn = document.getElementById('askDoctorBtn');
 const chatLauncher = document.getElementById('chatLauncher');
+const chatPopup = document.getElementById('chatPopup');
 const chatClose = document.getElementById('chatClose');
 const chatMessages = document.getElementById('chatMessages');
 const chatInput = document.getElementById('chatInput');
 const sendChatBtn = document.getElementById('sendChatBtn');
-const heroChatBtn = document.getElementById('heroChatBtn');
-const openChatLink = document.getElementById('openChatLink');
 
-let selectedFile = null;
-let lastAnalysis = null;
-let lastPatientContext = {};
-const chatHistory = [];
+const copyByStep = {
+    symptoms: {
+        title: 'Tell us what you <span>feel.</span>',
+        copy: 'Start with body area, duration, symptoms and treatment history. The image result works better when the AI knows what you are experiencing.',
+        tag: '<i class="fas fa-clipboard-question"></i> Step 1 of 4',
+    },
+    upload: {
+        title: 'Now add a clear <span>skin image.</span>',
+        copy: 'Upload or capture one focused photo. The app compresses it before sending, then analyzes the image plus your symptoms together.',
+        tag: '<i class="fas fa-camera"></i> Step 2 of 4',
+    },
+    loading: {
+        title: 'AI is reading the <span>photo.</span>',
+        copy: 'This can take a few seconds because the advanced vision model is checking visible signs and medical context.',
+        tag: '<i class="fas fa-brain"></i> Analyzing',
+    },
+    result: {
+        title: 'Review the AI <span>result.</span>',
+        copy: 'Check the likely condition, confidence, similar possibilities, care options and red flags. Use a clinician for confirmation.',
+        tag: '<i class="fas fa-file-medical"></i> Step 3 of 4',
+    },
+    chatReady: {
+        title: 'Ask follow-up <span>questions.</span>',
+        copy: 'AI doctor chat is now using this scan result and your symptoms for educational follow-up guidance.',
+        tag: '<i class="fas fa-comment-medical"></i> Step 4 of 4',
+    },
+};
 
 function esc(value) {
     const div = document.createElement('div');
     div.textContent = value == null ? '' : String(value);
     return div.innerHTML;
+}
+
+function setStep(step) {
+    currentStep = step;
+    const visiblePanel = step === 'chatReady' ? 'result' : step;
+    stepPanels.forEach(panel => {
+        panel.classList.toggle('active', panel.dataset.stepPanel === visiblePanel);
+    });
+
+    const visibleCopy = copyByStep[step] || copyByStep.symptoms;
+    wizardTitle.innerHTML = visibleCopy.title;
+    wizardCopy.textContent = visibleCopy.copy;
+    stageTag.innerHTML = visibleCopy.tag;
+
+    const activeIndex = stepOrder.indexOf(step === 'loading' ? 'upload' : step);
+    stepButtons.forEach(button => {
+        const index = stepOrder.indexOf(button.dataset.stepButton);
+        button.classList.toggle('active', index === activeIndex);
+        button.classList.toggle('done', index >= 0 && index < activeIndex);
+        button.disabled = button.dataset.stepButton === 'chatReady' && !chatUnlocked;
+    });
+    statusItems.forEach(item => {
+        const index = stepOrder.indexOf(item.dataset.status);
+        item.classList.toggle('active', index === activeIndex);
+        item.classList.toggle('done', index >= 0 && index < activeIndex);
+        item.querySelector('i').className = index < activeIndex ? 'fas fa-check-circle' : 'fas fa-circle';
+    });
+    window.scrollTo({ top:0, behavior:'smooth' });
 }
 
 function collectPatientContext() {
@@ -1201,6 +1192,26 @@ function collectPatientContext() {
         medicine_history: medicineHistory.value.trim(),
         extra_notes: extraNotes.value.trim(),
     };
+}
+
+function hasSymptomContext() {
+    const context = collectPatientContext();
+    return Boolean(
+        context.body_location ||
+        context.duration ||
+        context.symptoms ||
+        context.medicine_history ||
+        context.extra_notes ||
+        context.itching === 'Yes' ||
+        context.pain === 'Yes' ||
+        context.spreading === 'Yes' ||
+        context.fever === 'Yes'
+    );
+}
+
+function clearSymptoms() {
+    [bodyLocation, durationInput, symptomsInput, medicineHistory, extraNotes].forEach(input => { input.value = ''; });
+    [itchingInput, painInput, spreadingInput, feverInput].forEach(input => { input.checked = false; });
 }
 
 function imageFromFile(file) {
@@ -1227,6 +1238,7 @@ async function optimizeImageForUpload(file) {
     const largestSide = Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height);
     const scale = Math.min(1, maxSide / largestSide);
     if (scale >= 1 && file.size <= 1.4 * 1024 * 1024 && file.type === 'image/jpeg') return file;
+
     const canvas = document.createElement('canvas');
     canvas.width = Math.max(1, Math.round((img.naturalWidth || img.width) * scale));
     canvas.height = Math.max(1, Math.round((img.naturalHeight || img.height) * scale));
@@ -1236,12 +1248,6 @@ async function optimizeImageForUpload(file) {
     if (!blob) return file;
     const baseName = file.name.replace(/\.[^.]+$/, '') || 'skin-image';
     return new File([blob], `${baseName}-optimized.jpg`, { type:'image/jpeg', lastModified:Date.now() });
-}
-
-function setStage(stage) {
-    emptyState.style.display = stage === 'empty' ? 'grid' : 'none';
-    loadingState.style.display = stage === 'loading' ? 'grid' : 'none';
-    resultContent.style.display = stage === 'result' ? 'block' : 'none';
 }
 
 function handleFile() {
@@ -1261,47 +1267,23 @@ function handleFile() {
         return;
     }
     selectedFile = file;
-    lastAnalysis = null;
-    lastPatientContext = collectPatientContext();
     const reader = new FileReader();
     reader.onload = event => {
         previewImg.src = event.target.result;
         fileInfo.textContent = `${file.name} - ${(file.size / (1024 * 1024)).toFixed(2)} MB`;
         uploadZone.style.display = 'none';
         previewCard.style.display = 'block';
-        setStage('empty');
     };
     reader.readAsDataURL(file);
 }
 
-function resetScan() {
+function resetImage() {
     selectedFile = null;
-    lastAnalysis = null;
     fileInput.value = '';
     previewImg.removeAttribute('src');
     previewCard.style.display = 'none';
     uploadZone.style.display = 'grid';
-    modelBadge.innerHTML = '<i class="fas fa-brain"></i> Ready';
-    setStage('empty');
 }
-
-uploadZone.addEventListener('click', () => fileInput.click());
-changePhotoBtn.addEventListener('click', () => fileInput.click());
-fileInput.addEventListener('change', handleFile);
-resetBtn.addEventListener('click', resetScan);
-uploadZone.addEventListener('dragover', event => {
-    event.preventDefault();
-    uploadZone.classList.add('dragover');
-});
-uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
-uploadZone.addEventListener('drop', event => {
-    event.preventDefault();
-    uploadZone.classList.remove('dragover');
-    if (event.dataTransfer.files.length) {
-        fileInput.files = event.dataTransfer.files;
-        handleFile();
-    }
-});
 
 function riskColors(risk) {
     const value = String(risk || '').toLowerCase();
@@ -1322,13 +1304,13 @@ function detailCard(icon, label, text, full = false) {
 
 function renderMatches(top3) {
     const list = document.getElementById('matchesList');
-    const matches = Array.isArray(top3) && top3.length ? top3 : [];
+    const matches = Array.isArray(top3) ? top3 : [];
     list.innerHTML = matches.map((item, index) => {
         const conf = Number(item.confidence || 0);
         const gradient = index === 0
             ? 'linear-gradient(90deg, var(--teal), #22d3ee)'
             : index === 1
-                ? 'linear-gradient(90deg, var(--amber), #fb7185)'
+                ? 'linear-gradient(90deg, var(--amber), var(--coral))'
                 : 'linear-gradient(90deg, #94a3b8, #cbd5e1)';
         return `
             <div class="match-row">
@@ -1339,7 +1321,14 @@ function renderMatches(top3) {
                 <div class="match-bar"><span style="width:${Math.max(0, Math.min(100, conf))}%;background:${gradient};"></span></div>
             </div>
         `;
-    }).join('') || '<p style="color:#667984;font-weight:700;">No alternatives returned.</p>';
+    }).join('') || '<p style="color:#61777f;font-weight:750;">No alternatives returned.</p>';
+}
+
+function unlockChat() {
+    chatUnlocked = true;
+    chatLauncher.classList.add('show');
+    chatInput.disabled = false;
+    sendChatBtn.disabled = false;
 }
 
 function renderResult(data) {
@@ -1349,87 +1338,98 @@ function renderResult(data) {
     const [riskBg, riskColor] = riskColors(risk);
     const low = data.low_confidence === true || confidence < 60 || data.invalid_image === true;
 
-    document.getElementById('diagnosisName').textContent = name;
-    document.getElementById('diagnosisSummary').textContent = data.description || 'The AI could not provide a clear description from this image.';
+    document.getElementById('resultName').textContent = name;
+    document.getElementById('resultSummary').textContent = data.description || 'The AI could not provide a clear description from this image.';
     document.getElementById('confidenceText').textContent = `${confidence.toFixed(1)}%`;
     document.getElementById('confidenceFill').style.width = `${Math.max(0, Math.min(100, confidence))}%`;
-    document.getElementById('riskChip').style.background = riskBg;
-    document.getElementById('riskChip').style.color = riskColor;
-    document.getElementById('riskChip').innerHTML = `<i class="fas fa-shield-virus"></i> ${esc(risk)} Risk`;
-    document.getElementById('modelChip').innerHTML = `<i class="fas fa-microchip"></i> ${esc(data.model_used || 'AI Vision')}`;
-    modelBadge.innerHTML = `<i class="fas fa-brain"></i> ${esc(data.model_used || 'AI Vision')}`;
+    const riskChip = document.getElementById('riskChip');
+    riskChip.style.background = riskBg;
+    riskChip.style.color = riskColor;
+    riskChip.innerHTML = `<i class="fas fa-shield-virus"></i> ${esc(risk)} Risk`;
+    document.getElementById('modelChip').innerHTML = `<i class="fas fa-microchip"></i> ${esc(data.model_used || 'AI Vision Analysis')}`;
     document.getElementById('visualFindings').textContent = data.visual_findings || 'No specific visual signs were reported.';
 
     const warningBox = document.getElementById('warningBox');
     if (low) {
         warningBox.innerHTML = `<i class="fas fa-circle-question"></i><div><strong>Result uncertain.</strong> ${esc(data.result_warning || 'The image may be unclear or the condition may need clinician confirmation. Try a closer photo or consult a dermatologist.')}</div>`;
     } else {
-        warningBox.innerHTML = '<i class="fas fa-triangle-exclamation"></i><div>This tool is educational screening, not a final medical diagnosis. A dermatologist can confirm the condition.</div>';
+        warningBox.innerHTML = '<i class="fas fa-triangle-exclamation"></i><div>This is educational AI screening, not a final diagnosis. A qualified dermatologist can confirm the condition.</div>';
     }
 
     renderMatches(data.top3);
-
     document.getElementById('detailsGrid').innerHTML = [
         detailCard('fas fa-stethoscope', 'Common Symptoms', data.symptoms),
         detailCard('fas fa-virus', 'Possible Cause', data.cause),
-        detailCard('fas fa-list-check', 'Similar Conditions', data.differential_diagnoses, true),
-        detailCard('fas fa-location-dot', 'Common Locations', data.common_locations),
         detailCard('fas fa-people-arrows', 'Contagiousness', data.contagiousness),
+        detailCard('fas fa-location-dot', 'Common Locations', data.common_locations),
+        detailCard('fas fa-list-check', 'Similar Diseases', data.differential_diagnoses, true),
         detailCard('fas fa-kit-medical', 'Care Options', data.care_options || data.recommendations, true),
-        detailCard('fas fa-shield-heart', 'Prevention', data.prevention),
         detailCard('fas fa-ban', 'What to Avoid', data.what_to_avoid),
+        detailCard('fas fa-shield-heart', 'Prevention', data.prevention),
         detailCard('fas fa-vial-circle-check', 'How Doctors Confirm It', data.how_doctors_confirm, true),
         detailCard('fas fa-user-doctor', 'When to See a Doctor', data.when_to_see_doctor, true),
     ].join('');
 
-    const mapsUrl = 'https://www.google.com/maps/search/dermatologist+near+me';
-    const dermnetUrl = 'https://www.google.com/search?q=' + encodeURIComponent('site:dermnetnz.org ' + name);
-    document.getElementById('resultActions').innerHTML = `
-        <a class="btn btn-primary" href="${mapsUrl}" target="_blank" rel="noopener"><i class="fas fa-map-location-dot"></i> Dermatologist Near Me</a>
-        <button class="btn btn-dark" type="button" onclick="openChat(true)"><i class="fas fa-comment-medical"></i> Ask AI Chat</button>
-        <a class="btn" href="${dermnetUrl}" target="_blank" rel="noopener"><i class="fas fa-book-medical"></i> Learn More</a>
-        <button class="btn" type="button" onclick="resetScan()"><i class="fas fa-camera"></i> New Scan</button>
-    `;
-
-    setStage('result');
-    document.getElementById('results').scrollIntoView({ behavior:'smooth', block:'start' });
+    unlockChat();
+    addBubble('assistant', `Your scan result is ready: ${name}. Ask me what to avoid, whether it can spread, or when to see a doctor.`);
+    setStep('result');
 }
 
-analyzeBtn.addEventListener('click', async () => {
+async function analyzeSkin() {
     if (!selectedFile) {
         alert('Please upload a skin image first.');
         return;
     }
-    const patientContext = collectPatientContext();
+    lastPatientContext = collectPatientContext();
     analyzeBtn.disabled = true;
-    setStage('loading');
+    setStep('loading');
     try {
         const uploadFile = await optimizeImageForUpload(selectedFile);
         const formData = new FormData();
         formData.append('file', uploadFile);
-        Object.entries(patientContext).forEach(([key, value]) => formData.append(key, value));
+        Object.entries(lastPatientContext).forEach(([key, value]) => formData.append(key, value));
         const response = await fetch('/predict', { method:'POST', body:formData });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Analysis failed.');
         lastAnalysis = data;
-        lastPatientContext = data.patient_context || patientContext;
+        lastPatientContext = data.patient_context || lastPatientContext;
         renderResult(data);
-        addBubble('assistant', `I have the scan result now: ${data.predicted_class || 'uncertain result'}. You can ask what to avoid, whether it can spread, or when to see a doctor.`);
     } catch (error) {
         alert(error.message || 'Network error. Please try again.');
-        setStage(lastAnalysis ? 'result' : 'empty');
+        setStep('upload');
     } finally {
         analyzeBtn.disabled = false;
     }
-});
+}
 
-function openChat(focus = false) {
+function newScreening() {
+    clearSymptoms();
+    resetImage();
+    lastAnalysis = null;
+    lastPatientContext = {};
+    chatUnlocked = false;
+    chatLauncher.classList.remove('show');
+    chatPopup.classList.remove('open');
+    chatInput.disabled = true;
+    sendChatBtn.disabled = true;
+    chatHistory.length = 0;
+    chatMessages.innerHTML = '<div class="bubble assistant">Your AI doctor chat will unlock after the scan result. Then you can ask what to avoid, whether it can spread, or when to see a doctor.</div>';
+    setStep('symptoms');
+}
+
+function openChat() {
+    if (!chatUnlocked) {
+        alert('Please complete a scan first. AI Doctor Chat unlocks after the result.');
+        return;
+    }
     chatPopup.classList.add('open');
-    if (focus) setTimeout(() => chatInput.focus(), 80);
+    setStep('chatReady');
+    setTimeout(() => chatInput.focus(), 80);
 }
 
 function closeChat() {
     chatPopup.classList.remove('open');
+    if (lastAnalysis) setStep('result');
 }
 
 function addBubble(role, text) {
@@ -1441,6 +1441,7 @@ function addBubble(role, text) {
 }
 
 async function sendChat() {
+    if (!chatUnlocked) return;
     const text = chatInput.value.trim();
     if (!text) return;
     chatInput.value = '';
@@ -1474,12 +1475,23 @@ async function sendChat() {
     }
 }
 
-chatLauncher.addEventListener('click', () => openChat(true));
-heroChatBtn.addEventListener('click', () => openChat(true));
-openChatLink.addEventListener('click', event => {
-    event.preventDefault();
-    openChat(true);
+symptomsNextBtn.addEventListener('click', () => {
+    if (!hasSymptomContext()) {
+        alert('Please add at least one symptom, body area, duration, or note before scanning.');
+        return;
+    }
+    lastPatientContext = collectPatientContext();
+    setStep('upload');
 });
+clearSymptomsBtn.addEventListener('click', clearSymptoms);
+uploadZone.addEventListener('click', () => fileInput.click());
+changePhotoBtn.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', handleFile);
+resetImageBtn.addEventListener('click', resetImage);
+analyzeBtn.addEventListener('click', analyzeSkin);
+newScanBtn.addEventListener('click', newScreening);
+askDoctorBtn.addEventListener('click', openChat);
+chatLauncher.addEventListener('click', openChat);
 chatClose.addEventListener('click', closeChat);
 sendChatBtn.addEventListener('click', sendChat);
 chatInput.addEventListener('keydown', event => {
@@ -1488,8 +1500,42 @@ chatInput.addEventListener('keydown', event => {
         sendChat();
     }
 });
+document.querySelectorAll('[data-back-to]').forEach(button => {
+    button.addEventListener('click', () => setStep(button.dataset.backTo));
+});
+stepButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        const requested = button.dataset.stepButton;
+        if (requested === 'upload' && !hasSymptomContext()) {
+            alert('Please enter what you feel first.');
+            return;
+        }
+        if (requested === 'result' && !lastAnalysis) {
+            alert('Please analyze an image first.');
+            return;
+        }
+        if (requested === 'chatReady') {
+            openChat();
+            return;
+        }
+        setStep(requested);
+    });
+});
+uploadZone.addEventListener('dragover', event => {
+    event.preventDefault();
+    uploadZone.classList.add('dragover');
+});
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', event => {
+    event.preventDefault();
+    uploadZone.classList.remove('dragover');
+    if (event.dataTransfer.files.length) {
+        fileInput.files = event.dataTransfer.files;
+        handleFile();
+    }
+});
 
-setStage('empty');
+setStep('symptoms');
 </script>
 </body>
 </html>
