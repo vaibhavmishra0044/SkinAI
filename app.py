@@ -478,7 +478,12 @@ def _patient_context_from_request(source):
     return {
         "body_location": _clean_context_text(source.get("body_location"), 120),
         "duration": _clean_context_text(source.get("duration"), 120),
+        "itching": _clean_context_text(source.get("itching"), 20),
+        "pain": _clean_context_text(source.get("pain"), 20),
+        "spreading": _clean_context_text(source.get("spreading"), 20),
+        "fever": _clean_context_text(source.get("fever"), 20),
         "symptoms": _clean_context_text(source.get("symptoms"), 300),
+        "medicine_history": _clean_context_text(source.get("medicine_history"), 400),
         "extra_notes": _clean_context_text(source.get("extra_notes"), 400),
     }
 
@@ -487,7 +492,12 @@ def _patient_context_prompt(patient_context):
     rows = [
         ("Body location", patient_context.get("body_location")),
         ("Duration", patient_context.get("duration")),
+        ("Itching", patient_context.get("itching")),
+        ("Pain", patient_context.get("pain")),
+        ("Spreading", patient_context.get("spreading")),
+        ("Fever", patient_context.get("fever")),
         ("Symptoms", patient_context.get("symptoms")),
+        ("Medicine/treatment history", patient_context.get("medicine_history")),
         ("Extra notes", patient_context.get("extra_notes")),
     ]
     lines = [f"- {label}: {value or 'Not provided'}" for label, value in rows]
@@ -633,7 +643,7 @@ Rules:
 - Do not restrict yourself to a fixed class list. Use the best dermatology condition name you can infer from the image.
 - Think broadly across common and uncommon visible skin conditions, including inflammatory rashes, fungal/bacterial/viral/parasitic infections, pigment disorders, acne/follicular disorders, vascular lesions, benign growths, precancerous lesions, and possible skin cancer warning signs.
 - If one exact disease cannot be determined from the image, return the most likely visible pattern and list realistic differential diagnoses in top3 instead of forcing a random confident answer.
-- Use the patient-provided body location, duration, and symptoms as supporting context, but do not let text override what is visible in the image.
+- Use the patient-provided body location, duration, itching, pain, spreading, fever, medicine history, and symptoms as supporting context, but do not let text override what is visible in the image.
 - First decide whether this is a usable dermatology photo. It must be a close-up of an affected skin area where a lesion/rash/patch is clearly visible.
 - Reject non-diagnostic images: doctors, stethoscopes, medical icons, app backgrounds, posters, screenshots, distant body photos, normal hands/arms without a visible lesion, or any image where the skin condition is not the main subject.
 - If the image is not a usable close-up skin-condition photo, set is_skin_image=false, lesion_visible=false, condition_name="No clear skin lesion detected", condition_key="unknown_normal", confidence=0.

@@ -179,6 +179,24 @@
         .context-input:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 3px rgba(14,165,233,.12); }
         textarea.context-input { min-height: 62px; resize: vertical; }
         .context-help { margin-top: 8px; color: var(--gray-400); font-size: 11px; line-height: 1.5; }
+        .context-checks {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .context-check {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 10px;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            background: var(--gray-50);
+            color: var(--gray-600);
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .context-check input { width: 15px; height: 15px; accent-color: var(--primary); }
 
         /* Analyze button */
         .btn-analyze {
@@ -712,12 +730,25 @@
                     <input class="context-input" id="duration" type="text" placeholder="e.g. 3 days, 2 weeks">
                 </div>
                 <div class="context-field full">
-                    <label class="context-label" for="symptomsInput">Symptoms</label>
-                    <textarea class="context-input" id="symptomsInput" placeholder="Itching, pain, burning, spreading, fever, bleeding..."></textarea>
+                    <span class="context-label">Key Symptoms</span>
+                    <div class="context-checks">
+                        <label class="context-check"><input type="checkbox" id="itchingInput"> Itching</label>
+                        <label class="context-check"><input type="checkbox" id="painInput"> Pain / burning</label>
+                        <label class="context-check"><input type="checkbox" id="spreadingInput"> Spreading</label>
+                        <label class="context-check"><input type="checkbox" id="feverInput"> Fever</label>
+                    </div>
+                </div>
+                <div class="context-field full">
+                    <label class="context-label" for="symptomsInput">Other Symptoms</label>
+                    <textarea class="context-input" id="symptomsInput" placeholder="Bleeding, pus, scaling, swelling, numbness, color change..."></textarea>
+                </div>
+                <div class="context-field full">
+                    <label class="context-label" for="medicineHistory">Medicine / Treatment History</label>
+                    <textarea class="context-input" id="medicineHistory" placeholder="Creams, tablets, home remedies, allergies, current medicines..."></textarea>
                 </div>
                 <div class="context-field full">
                     <label class="context-label" for="extraNotes">Other Notes</label>
-                    <textarea class="context-input" id="extraNotes" placeholder="Medicines used, allergy, animal contact, new soap, diabetes, etc."></textarea>
+                    <textarea class="context-input" id="extraNotes" placeholder="Animal contact, new soap/cosmetics, diabetes, pregnancy, immune problems, etc."></textarea>
                 </div>
             </div>
             <div class="context-help">
@@ -849,7 +880,12 @@ const resultWrap  = document.getElementById('resultWrap');
 const modelBadge  = document.getElementById('modelBadgeTop');
 const bodyLocation = document.getElementById('bodyLocation');
 const durationInput = document.getElementById('duration');
+const itchingInput = document.getElementById('itchingInput');
+const painInput = document.getElementById('painInput');
+const spreadingInput = document.getElementById('spreadingInput');
+const feverInput = document.getElementById('feverInput');
 const symptomsInput = document.getElementById('symptomsInput');
+const medicineHistory = document.getElementById('medicineHistory');
 const extraNotes = document.getElementById('extraNotes');
 const chatMessagesEl = document.getElementById('chatMessages');
 const chatInput = document.getElementById('chatInput');
@@ -877,7 +913,12 @@ function collectPatientContext() {
     return {
         body_location: bodyLocation.value.trim(),
         duration: durationInput.value.trim(),
+        itching: itchingInput.checked ? 'Yes' : 'No',
+        pain: painInput.checked ? 'Yes' : 'No',
+        spreading: spreadingInput.checked ? 'Yes' : 'No',
+        fever: feverInput.checked ? 'Yes' : 'No',
         symptoms: symptomsInput.value.trim(),
+        medicine_history: medicineHistory.value.trim(),
         extra_notes: extraNotes.value.trim(),
     };
 }
@@ -917,7 +958,12 @@ analyzeBtn.addEventListener('click', async () => {
     fd.append('file', selectedFile);
     fd.append('body_location', bodyLocation.value.trim());
     fd.append('duration', durationInput.value.trim());
+    fd.append('itching', itchingInput.checked ? 'Yes' : 'No');
+    fd.append('pain', painInput.checked ? 'Yes' : 'No');
+    fd.append('spreading', spreadingInput.checked ? 'Yes' : 'No');
+    fd.append('fever', feverInput.checked ? 'Yes' : 'No');
     fd.append('symptoms', symptomsInput.value.trim());
+    fd.append('medicine_history', medicineHistory.value.trim());
     fd.append('extra_notes', extraNotes.value.trim());
     analyzeBtn.disabled = true;
     loadingWrap.style.display = 'block';
