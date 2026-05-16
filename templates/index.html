@@ -862,8 +862,8 @@
     </a>
 
     <div class="stepper" aria-label="Screening progress">
-        <button class="step-dot active" type="button" data-step-button="symptoms"><span>1</span> Symptoms</button>
-        <button class="step-dot" type="button" data-step-button="upload"><span>2</span> Scan</button>
+        <button class="step-dot active" type="button" data-step-button="upload"><span>1</span> Scan</button>
+        <button class="step-dot" type="button" data-step-button="symptoms"><span>2</span> Quiz</button>
         <button class="step-dot" type="button" data-step-button="result"><span>3</span> Result</button>
         <button class="step-dot" type="button" data-step-button="chatReady"><span>4</span> AI Chat</button>
     </div>
@@ -888,13 +888,13 @@
             <div class="wizard-head">
                 <div>
                     <div class="kicker"><i class="fas fa-route"></i> Guided pipeline</div>
-                    <h1 class="wizard-title" id="wizardTitle">Tell us what you <span>feel.</span></h1>
-                    <p class="wizard-copy" id="wizardCopy">Start with symptoms and context. Then SkinAI will ask for a clear skin image, analyze both together, and unlock result-aware AI doctor chat.</p>
+                    <h1 class="wizard-title" id="wizardTitle">Scan the skin <span>first.</span></h1>
+                    <p class="wizard-copy" id="wizardCopy">Start with a clear skin image. After that, SkinAI asks a short symptom quiz to verify the result with what you feel.</p>
                 </div>
-                <div class="stage-tag" id="stageTag"><i class="fas fa-clipboard-question"></i> Step 1 of 4</div>
+                <div class="stage-tag" id="stageTag"><i class="fas fa-camera"></i> Step 1 of 4</div>
             </div>
 
-            <section class="step-panel active" data-step-panel="symptoms">
+            <section class="step-panel" data-step-panel="symptoms">
                 <div class="form-grid">
                     <div class="field">
                         <label for="bodyLocation">Body Area</label>
@@ -927,14 +927,15 @@
                     </div>
                 </div>
                 <div class="actions-row">
-                    <button class="btn btn-ghost" type="button" id="clearSymptomsBtn"><i class="fas fa-eraser"></i> Clear</button>
+                    <button class="btn btn-ghost" type="button" data-back-to="upload"><i class="fas fa-arrow-left"></i> Back to Image</button>
                     <div class="right">
-                        <button class="btn btn-primary" type="button" id="symptomsNextBtn">Next: Upload Image <i class="fas fa-arrow-right"></i></button>
+                        <button class="btn" type="button" id="clearSymptomsBtn"><i class="fas fa-eraser"></i> Clear Quiz</button>
+                        <button class="btn btn-primary" id="analyzeBtn" type="button"><i class="fas fa-brain"></i> Verify & Analyze</button>
                     </div>
                 </div>
             </section>
 
-            <section class="step-panel" data-step-panel="upload">
+            <section class="step-panel active" data-step-panel="upload">
                 <div class="upload-layout">
                     <div>
                         <div class="upload-zone" id="uploadZone">
@@ -962,10 +963,10 @@
                     </aside>
                 </div>
                 <div class="actions-row">
-                    <button class="btn btn-ghost" type="button" data-back-to="symptoms"><i class="fas fa-arrow-left"></i> Back</button>
+                    <span></span>
                     <div class="right">
                         <button class="btn" type="button" id="resetImageBtn"><i class="fas fa-rotate-left"></i> Reset Image</button>
-                        <button class="btn btn-primary" id="analyzeBtn" type="button"><i class="fas fa-brain"></i> Analyze Skin</button>
+                        <button class="btn btn-primary" id="imageNextBtn" type="button">Next: Symptom Quiz <i class="fas fa-arrow-right"></i></button>
                     </div>
                 </div>
             </section>
@@ -975,7 +976,7 @@
                     <div>
                         <div class="loader"></div>
                         <h2>Analyzing your scan</h2>
-                        <p>SkinAI is combining your photo with symptoms and asking the AI vision model for a structured result.</p>
+                        <p>SkinAI is checking the scan with your symptom quiz and asking the AI vision model for a verified structured result.</p>
                     </div>
                 </div>
             </section>
@@ -1018,7 +1019,7 @@
                 <div class="details-grid" id="detailsGrid"></div>
 
                 <div class="actions-row">
-                    <button class="btn btn-ghost" type="button" data-back-to="upload"><i class="fas fa-arrow-left"></i> Back to Image</button>
+                    <button class="btn btn-ghost" type="button" data-back-to="symptoms"><i class="fas fa-arrow-left"></i> Back to Quiz</button>
                     <div class="right">
                         <button class="btn" type="button" id="newScanBtn"><i class="fas fa-rotate-left"></i> New Screening</button>
                         <button class="btn btn-dark" type="button" id="askDoctorBtn"><i class="fas fa-comment-medical"></i> Ask AI Doctor</button>
@@ -1031,8 +1032,8 @@
             <div class="mini-card">
                 <div class="mini-title"><i class="fas fa-location-arrow"></i> Current Progress</div>
                 <div class="status-list">
-                    <div class="status-item active" data-status="symptoms"><i class="fas fa-circle"></i> Symptoms entered</div>
-                    <div class="status-item" data-status="upload"><i class="fas fa-circle"></i> Image uploaded</div>
+                    <div class="status-item active" data-status="upload"><i class="fas fa-circle"></i> Image uploaded</div>
+                    <div class="status-item" data-status="symptoms"><i class="fas fa-circle"></i> Symptom quiz completed</div>
                     <div class="status-item" data-status="result"><i class="fas fa-circle"></i> Result generated</div>
                     <div class="status-item" data-status="chatReady"><i class="fas fa-circle"></i> AI chat unlocked</div>
                 </div>
@@ -1040,8 +1041,8 @@
             <div class="mini-card">
                 <div class="mini-title"><i class="fas fa-lightbulb"></i> What helps accuracy</div>
                 <ul>
-                    <li>Use a clear close-up image.</li>
-                    <li>Add body part and duration.</li>
+                    <li>Upload a clear close-up image first.</li>
+                    <li>Answer the quiz after the scan.</li>
                     <li>Mention itching, pain, spreading or fever.</li>
                     <li>Tell us if any cream or medicine was used.</li>
                 </ul>
@@ -1076,8 +1077,8 @@
 </aside>
 
 <script>
-const stepOrder = ['symptoms', 'upload', 'result', 'chatReady'];
-let currentStep = 'symptoms';
+const stepOrder = ['upload', 'symptoms', 'result', 'chatReady'];
+let currentStep = 'upload';
 let selectedFile = null;
 let lastAnalysis = null;
 let lastPatientContext = {};
@@ -1100,7 +1101,7 @@ const symptomsInput = document.getElementById('symptomsInput');
 const medicineHistory = document.getElementById('medicineHistory');
 const extraNotes = document.getElementById('extraNotes');
 const clearSymptomsBtn = document.getElementById('clearSymptomsBtn');
-const symptomsNextBtn = document.getElementById('symptomsNextBtn');
+const imageNextBtn = document.getElementById('imageNextBtn');
 const uploadZone = document.getElementById('uploadZone');
 const fileInput = document.getElementById('fileInput');
 const previewCard = document.getElementById('previewCard');
@@ -1119,19 +1120,19 @@ const chatInput = document.getElementById('chatInput');
 const sendChatBtn = document.getElementById('sendChatBtn');
 
 const copyByStep = {
-    symptoms: {
-        title: 'Tell us what you <span>feel.</span>',
-        copy: 'Start with body area, duration, symptoms and treatment history. The image result works better when the AI knows what you are experiencing.',
-        tag: '<i class="fas fa-clipboard-question"></i> Step 1 of 4',
-    },
     upload: {
-        title: 'Now add a clear <span>skin image.</span>',
-        copy: 'Upload or capture one focused photo. The app compresses it before sending, then analyzes the image plus your symptoms together.',
-        tag: '<i class="fas fa-camera"></i> Step 2 of 4',
+        title: 'Scan the skin <span>first.</span>',
+        copy: 'Upload or capture one focused photo first. Then SkinAI asks a short symptom quiz to verify the image result with what you feel.',
+        tag: '<i class="fas fa-camera"></i> Step 1 of 4',
+    },
+    symptoms: {
+        title: 'Now answer the <span>symptom quiz.</span>',
+        copy: 'Add body area, duration, symptoms and treatment history after the scan. This helps the AI avoid random image-only guesses.',
+        tag: '<i class="fas fa-clipboard-question"></i> Step 2 of 4',
     },
     loading: {
-        title: 'AI is reading the <span>photo.</span>',
-        copy: 'This can take a few seconds because the advanced vision model is checking visible signs and medical context.',
+        title: 'AI is verifying the <span>scan.</span>',
+        copy: 'This can take a few seconds because the advanced vision model is checking the image together with your symptom quiz.',
         tag: '<i class="fas fa-brain"></i> Analyzing',
     },
     result: {
@@ -1164,7 +1165,7 @@ function setStep(step) {
     wizardCopy.textContent = visibleCopy.copy;
     stageTag.innerHTML = visibleCopy.tag;
 
-    const activeIndex = stepOrder.indexOf(step === 'loading' ? 'upload' : step);
+    const activeIndex = stepOrder.indexOf(step === 'loading' ? 'symptoms' : step);
     stepButtons.forEach(button => {
         const index = stepOrder.indexOf(button.dataset.stepButton);
         button.classList.toggle('active', index === activeIndex);
@@ -1380,6 +1381,10 @@ async function analyzeSkin() {
         alert('Please upload a skin image first.');
         return;
     }
+    if (!hasSymptomContext()) {
+        alert('Please answer at least one symptom quiz item so the AI can verify the scan.');
+        return;
+    }
     lastPatientContext = collectPatientContext();
     analyzeBtn.disabled = true;
     setStep('loading');
@@ -1414,7 +1419,7 @@ function newScreening() {
     sendChatBtn.disabled = true;
     chatHistory.length = 0;
     chatMessages.innerHTML = '<div class="bubble assistant">Your AI doctor chat will unlock after the scan result. Then you can ask what to avoid, whether it can spread, or when to see a doctor.</div>';
-    setStep('symptoms');
+    setStep('upload');
 }
 
 function openChat() {
@@ -1475,13 +1480,12 @@ async function sendChat() {
     }
 }
 
-symptomsNextBtn.addEventListener('click', () => {
-    if (!hasSymptomContext()) {
-        alert('Please add at least one symptom, body area, duration, or note before scanning.');
+imageNextBtn.addEventListener('click', () => {
+    if (!selectedFile) {
+        alert('Please upload or capture a skin image first.');
         return;
     }
-    lastPatientContext = collectPatientContext();
-    setStep('upload');
+    setStep('symptoms');
 });
 clearSymptomsBtn.addEventListener('click', clearSymptoms);
 uploadZone.addEventListener('click', () => fileInput.click());
@@ -1506,12 +1510,12 @@ document.querySelectorAll('[data-back-to]').forEach(button => {
 stepButtons.forEach(button => {
     button.addEventListener('click', () => {
         const requested = button.dataset.stepButton;
-        if (requested === 'upload' && !hasSymptomContext()) {
-            alert('Please enter what you feel first.');
+        if (requested === 'symptoms' && !selectedFile) {
+            alert('Please upload or capture a skin image first.');
             return;
         }
         if (requested === 'result' && !lastAnalysis) {
-            alert('Please analyze an image first.');
+            alert('Please complete the symptom quiz and analyze first.');
             return;
         }
         if (requested === 'chatReady') {
@@ -1535,7 +1539,7 @@ uploadZone.addEventListener('drop', event => {
     }
 });
 
-setStep('symptoms');
+setStep('upload');
 </script>
 </body>
 </html>
