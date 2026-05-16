@@ -1,6 +1,393 @@
-{% extends 'base.html' %}
-{% block title %}Home{% endblock %}
-{% block page_title %}Home{% endblock %}
-{% block content %}
-<script>window.location.href = '{{ url_for("dashboard") }}';</script>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkinAI - AI Skin Disease Screening</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --ink:#061416;
+            --panel:#0b2023;
+            --panel-2:#0e2b2e;
+            --line:rgba(191,232,229,.14);
+            --text:#effffb;
+            --muted:#93aaa9;
+            --teal:#14b8a6;
+            --cyan:#22d3ee;
+            --amber:#f59e0b;
+            --red:#ef4444;
+            --green:#22c55e;
+        }
+        * { box-sizing:border-box; margin:0; padding:0; }
+        html { scroll-behavior:smooth; }
+        body {
+            font-family:'Inter', system-ui, sans-serif;
+            color:var(--text);
+            background:
+                linear-gradient(180deg, rgba(6,20,22,.90), rgba(6,20,22,.98)),
+                url("{{ url_for('static', filename='background.jpg') }}") center/cover fixed;
+            min-height:100vh;
+            overflow-x:hidden;
+        }
+        body::before {
+            content:"";
+            position:fixed; inset:0; pointer-events:none;
+            background-image:
+                linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(255,255,255,.035) 1px, transparent 1px);
+            background-size:64px 64px;
+            mask-image:linear-gradient(180deg, black, transparent 80%);
+        }
+        a { color:inherit; text-decoration:none; }
+        .site-header {
+            position:sticky; top:0; z-index:20;
+            display:flex; align-items:center; justify-content:space-between; gap:22px;
+            padding:18px clamp(18px,4vw,70px);
+            background:rgba(6,20,22,.78);
+            border-bottom:1px solid var(--line);
+            backdrop-filter:blur(22px);
+        }
+        .brand { display:flex; align-items:center; gap:12px; min-width:max-content; }
+        .brand-mark {
+            width:46px; height:46px; border-radius:16px;
+            display:grid; place-items:center;
+            background:linear-gradient(135deg, #14b8a6, #0891b2);
+            box-shadow:0 0 34px rgba(20,184,166,.38);
+            font-size:21px;
+        }
+        .brand-name { font-weight:900; font-size:25px; letter-spacing:0; }
+        .brand-name span { color:var(--teal); }
+        .nav {
+            display:flex; align-items:center; gap:clamp(12px,2vw,30px);
+            color:var(--muted); font-weight:800; font-size:14px;
+        }
+        .nav a:hover { color:white; }
+        .actions { display:flex; align-items:center; gap:10px; min-width:max-content; }
+        .icon-btn, .btn {
+            display:inline-flex; align-items:center; justify-content:center; gap:8px;
+            border:1px solid var(--line);
+            background:rgba(255,255,255,.05);
+            color:white;
+            min-height:44px;
+            border-radius:999px;
+            font-weight:900;
+            cursor:pointer;
+            transition:transform .2s, border-color .2s, background .2s, box-shadow .2s;
+        }
+        .icon-btn { width:44px; }
+        .btn { padding:0 18px; }
+        .btn:hover, .icon-btn:hover { transform:translateY(-1px); border-color:rgba(34,211,238,.36); }
+        .btn-primary {
+            background:linear-gradient(135deg, #14b8a6, #059669);
+            border-color:transparent;
+            box-shadow:0 12px 34px rgba(20,184,166,.25);
+        }
+        .btn-admin { border-color:rgba(245,158,11,.28); }
+        .btn-admin:hover { background:rgba(245,158,11,.12); }
+        .hero {
+            min-height:calc(100vh - 82px);
+            display:grid;
+            align-items:center;
+            padding:clamp(54px,8vw,110px) clamp(18px,4vw,70px) 46px;
+            position:relative;
+        }
+        .hero-inner { max-width:1180px; width:100%; margin:0 auto; }
+        .hero-kicker {
+            display:inline-flex; align-items:center; gap:9px;
+            padding:8px 13px; border-radius:999px;
+            background:rgba(20,184,166,.12);
+            border:1px solid rgba(20,184,166,.28);
+            color:#a7fff3; font-weight:900; font-size:13px;
+        }
+        .hero-title {
+            margin-top:22px;
+            max-width:860px;
+            font-size:clamp(44px,8vw,92px);
+            line-height:.98;
+            letter-spacing:0;
+            font-weight:900;
+        }
+        .hero-title span { color:#20d6c4; }
+        .hero-copy {
+            max-width:690px;
+            color:#b5c6c5;
+            font-size:clamp(16px,2vw,20px);
+            line-height:1.75;
+            margin-top:22px;
+        }
+        .hero-actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:30px; }
+        .hero-proof { display:flex; flex-wrap:wrap; gap:10px; margin-top:26px; }
+        .pill {
+            display:inline-flex; align-items:center; gap:8px;
+            padding:8px 12px;
+            border-radius:999px;
+            background:rgba(255,255,255,.055);
+            border:1px solid var(--line);
+            color:#a9bbbb;
+            font-size:13px;
+            font-weight:800;
+        }
+        .scan-stage {
+            margin-top:42px;
+            display:grid;
+            grid-template-columns:1fr 1fr 1fr;
+            gap:16px;
+        }
+        .stage-card, .feature-card, .step-card {
+            border:1px solid var(--line);
+            background:linear-gradient(180deg, rgba(13,43,45,.74), rgba(9,29,31,.72));
+            border-radius:18px;
+            box-shadow:0 26px 80px rgba(0,0,0,.28);
+            overflow:hidden;
+        }
+        .stage-card { padding:18px; min-height:190px; position:relative; }
+        .stage-head { display:flex; align-items:center; justify-content:space-between; color:#bdeee8; font-size:13px; font-weight:900; }
+        .stage-icon {
+            width:38px; height:38px; border-radius:13px;
+            display:grid; place-items:center;
+            background:rgba(20,184,166,.16);
+            color:#5eead4;
+        }
+        .scanner {
+            margin:18px auto 0;
+            width:min(180px,100%);
+            aspect-ratio:1.2;
+            border-radius:18px;
+            border:1px solid rgba(34,211,238,.20);
+            background:
+                linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(255,255,255,.08) 1px, transparent 1px),
+                rgba(3,7,18,.50);
+            background-size:28px 28px;
+            position:relative;
+            overflow:hidden;
+        }
+        .scanner::before {
+            content:""; position:absolute; left:14%; right:14%; top:20%; height:28%;
+            border:3px solid rgba(20,184,166,.76);
+            border-radius:50%;
+            box-shadow:0 0 30px rgba(20,184,166,.24);
+        }
+        .scanner::after {
+            content:""; position:absolute; left:0; right:0; top:20%;
+            height:2px; background:linear-gradient(90deg, transparent, #22d3ee, transparent);
+            animation:sweep 2.2s ease-in-out infinite;
+            box-shadow:0 0 18px #22d3ee;
+        }
+        @keyframes sweep { 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(86px); } }
+        .metric-list { display:grid; gap:10px; margin-top:18px; }
+        .metric-row { display:grid; grid-template-columns:94px 1fr 38px; align-items:center; gap:10px; color:#b4c4c3; font-size:12px; font-weight:800; }
+        .track { height:7px; background:rgba(255,255,255,.10); border-radius:999px; overflow:hidden; }
+        .fill { height:100%; border-radius:999px; background:linear-gradient(90deg, var(--teal), var(--cyan)); animation:grow 1.4s ease both; }
+        @keyframes grow { from{ width:0; } }
+        .chat-preview { display:grid; gap:10px; margin-top:18px; }
+        .bubble { padding:10px 12px; border-radius:13px; font-size:13px; line-height:1.45; color:#cfe5e3; background:rgba(255,255,255,.07); }
+        .bubble.user { justify-self:end; max-width:78%; background:rgba(20,184,166,.22); color:white; }
+        .bubble.ai { max-width:86%; }
+        .section { padding:72px clamp(18px,4vw,70px); }
+        .section-inner { max-width:1180px; margin:0 auto; }
+        .section-title { font-size:clamp(30px,4vw,54px); line-height:1.05; font-weight:900; max-width:780px; }
+        .section-title span { color:var(--teal); }
+        .section-sub { margin-top:14px; max-width:700px; color:var(--muted); line-height:1.75; font-size:16px; }
+        .features { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:28px; }
+        .feature-card, .step-card { padding:20px; }
+        .feature-card i, .step-card i { color:#5eead4; font-size:22px; }
+        .feature-card h3, .step-card h3 { margin-top:14px; font-size:18px; }
+        .feature-card p, .step-card p { margin-top:8px; color:var(--muted); line-height:1.65; font-size:14px; }
+        .steps { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:30px; }
+        .step-num { font-size:13px; color:#9ffff3; font-weight:900; }
+        .cta-band {
+            margin-top:34px;
+            border:1px solid rgba(20,184,166,.28);
+            border-radius:22px;
+            padding:26px;
+            background:linear-gradient(135deg, rgba(20,184,166,.15), rgba(34,211,238,.07));
+            display:flex; align-items:center; justify-content:space-between; gap:18px; flex-wrap:wrap;
+        }
+        .footer { padding:28px clamp(18px,4vw,70px); color:var(--muted); border-top:1px solid var(--line); background:rgba(6,20,22,.78); }
+        .footer-inner { max-width:1180px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; font-size:13px; }
+        .float-scan {
+            position:fixed; right:26px; bottom:26px; z-index:30;
+            width:70px; height:70px; border-radius:22px;
+            display:grid; place-items:center;
+            background:linear-gradient(135deg, #14b8a6, #0891b2);
+            box-shadow:0 0 0 8px rgba(20,184,166,.10), 0 20px 60px rgba(34,211,238,.26);
+            font-size:25px;
+            animation:float 3.4s ease-in-out infinite;
+        }
+        .float-scan::after {
+            content:""; position:absolute; right:2px; bottom:2px; width:16px; height:16px;
+            border-radius:50%; background:#22c55e; border:2px solid var(--ink);
+        }
+        @keyframes float { 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-8px); } }
+        @media(max-width:960px){
+            .nav { display:none; }
+            .scan-stage, .features { grid-template-columns:1fr; }
+            .steps { grid-template-columns:1fr 1fr; }
+        }
+        @media(max-width:640px){
+            .site-header { align-items:flex-start; flex-direction:column; }
+            .actions { width:100%; flex-wrap:wrap; }
+            .btn { flex:1; min-width:max-content; }
+            .steps { grid-template-columns:1fr; }
+            .float-scan { width:58px; height:58px; right:16px; bottom:16px; border-radius:18px; }
+        }
+    </style>
+</head>
+<body>
+<header class="site-header">
+    <a class="brand" href="{{ url_for('home') }}">
+        <div class="brand-mark"><i class="fas fa-wand-magic-sparkles"></i></div>
+        <div class="brand-name">Skin<span>AI</span></div>
+    </a>
+    <nav class="nav" aria-label="Primary navigation">
+        <a href="#scan">Scan</a>
+        <a href="#how">How it works</a>
+        <a href="#features">Features</a>
+        <a href="#chat">AI Chat</a>
+    </nav>
+    <div class="actions">
+        <a class="icon-btn" href="{{ url_for('scan_page') }}" title="Open scan"><i class="fas fa-camera"></i></a>
+        {% if current_user.is_authenticated and current_user.is_admin %}
+            <a class="btn btn-admin" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-user-shield"></i> Admin Panel</a>
+        {% else %}
+            <a class="btn btn-admin" href="{{ url_for('login') }}"><i class="fas fa-user-shield"></i> Admin Login</a>
+        {% endif %}
+        {% if current_user.is_authenticated %}
+            <a class="btn" href="{{ url_for('dashboard') }}"><i class="fas fa-chart-line"></i> Dashboard</a>
+        {% else %}
+            <a class="btn" href="{{ url_for('login') }}"><i class="fas fa-right-to-bracket"></i> Sign In</a>
+        {% endif %}
+        <a class="btn btn-primary" href="{{ url_for('scan_page') }}"><i class="fas fa-magnifying-glass-plus"></i> Start Scan</a>
+    </div>
+</header>
+
+<main>
+    <section class="hero" id="scan">
+        <div class="hero-inner">
+            <div class="hero-kicker"><i class="fas fa-brain"></i> AI vision + symptoms + care chat</div>
+            <h1 class="hero-title">Screen skin conditions in <span>one focused scan.</span></h1>
+            <p class="hero-copy">
+                Upload a clear skin image, add symptoms like itching, pain, spreading, fever, body area and treatment history, then get a structured AI report with likely matches and safer next steps.
+            </p>
+            <div class="hero-actions">
+                <a class="btn btn-primary" href="{{ url_for('scan_page') }}"><i class="fas fa-camera"></i> Start free scan</a>
+                <a class="btn" href="#how"><i class="fas fa-circle-play"></i> See how it works</a>
+                <a class="btn btn-admin" href="{{ url_for('login') }}"><i class="fas fa-lock"></i> Login to Admin Panel</a>
+            </div>
+            <div class="hero-proof">
+                <span class="pill"><i class="fas fa-shield-halved"></i> Educational screening</span>
+                <span class="pill"><i class="fas fa-clipboard-list"></i> Symptom-aware AI</span>
+                <span class="pill"><i class="fas fa-comments"></i> Follow-up chat</span>
+                <span class="pill"><i class="fas fa-user-doctor"></i> Doctor red flags</span>
+            </div>
+
+            <div class="scan-stage" aria-label="SkinAI preview">
+                <div class="stage-card">
+                    <div class="stage-head"><span>Live scan workspace</span><span class="stage-icon"><i class="fas fa-crosshairs"></i></span></div>
+                    <div class="scanner"></div>
+                    <div class="hero-proof" style="margin-top:16px;">
+                        <span class="pill"><i class="fas fa-image"></i> JPG / PNG / WebP</span>
+                        <span class="pill"><i class="fas fa-bolt"></i> Fast analysis</span>
+                    </div>
+                </div>
+                <div class="stage-card">
+                    <div class="stage-head"><span>What the AI considers</span><span class="stage-icon"><i class="fas fa-sliders"></i></span></div>
+                    <div class="metric-list">
+                        <div class="metric-row"><span>Image</span><div class="track"><div class="fill" style="width:92%"></div></div><strong>92</strong></div>
+                        <div class="metric-row"><span>Symptoms</span><div class="track"><div class="fill" style="width:84%"></div></div><strong>84</strong></div>
+                        <div class="metric-row"><span>Urgency</span><div class="track"><div class="fill" style="width:62%"></div></div><strong>62</strong></div>
+                        <div class="metric-row"><span>Care</span><div class="track"><div class="fill" style="width:76%"></div></div><strong>76</strong></div>
+                    </div>
+                </div>
+                <div class="stage-card" id="chat">
+                    <div class="stage-head"><span>AI Skin Chat</span><span class="stage-icon"><i class="fas fa-comment-medical"></i></span></div>
+                    <div class="chat-preview">
+                        <div class="bubble user">What should I avoid?</div>
+                        <div class="bubble ai">Avoid scratching, harsh creams, and steroid-only creams if a fungal rash is possible. See a clinician if it spreads, hurts, drains pus, or does not improve.</div>
+                        <div class="bubble user">Is it urgent?</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="features">
+        <div class="section-inner">
+            <h2 class="section-title">Dedicated scan flow, <span>not buried in admin.</span></h2>
+            <p class="section-sub">Visitors can open the scan page directly from the header or floating scan button. Admin tools stay separate behind the admin-login action.</p>
+            <div class="features">
+                <div class="feature-card">
+                    <i class="fas fa-camera-retro"></i>
+                    <h3>Image-first detection</h3>
+                    <p>AI vision reviews the uploaded lesion/rash photo and rejects unsuitable uploads instead of forcing random labels.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-notes-medical"></i>
+                    <h3>Symptoms improve context</h3>
+                    <p>Body area, duration, itching, pain, spreading, fever and medicine history are sent with the image for better reasoning.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-comments"></i>
+                    <h3>AI follow-up chat</h3>
+                    <p>People can ask what to avoid, when to see a doctor, what tests confirm it, and what warning signs matter.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="how">
+        <div class="section-inner">
+            <h2 class="section-title">A cleaner path from <span>photo to guidance.</span></h2>
+            <p class="section-sub">The interface is built for people who need a quick, understandable skin screening result without entering the admin dashboard.</p>
+            <div class="steps">
+                <div class="step-card">
+                    <div class="step-num">01</div>
+                    <i class="fas fa-upload"></i>
+                    <h3>Upload</h3>
+                    <p>Add a clear close-up photo of the affected skin area.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">02</div>
+                    <i class="fas fa-clipboard-question"></i>
+                    <h3>Answer</h3>
+                    <p>Tell the AI where it is, how long, symptoms, fever, spreading and medicines used.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">03</div>
+                    <i class="fas fa-brain"></i>
+                    <h3>Analyze</h3>
+                    <p>Get likely matches, confidence, visible signs, condition details and red flags.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">04</div>
+                    <i class="fas fa-comment-dots"></i>
+                    <h3>Ask</h3>
+                    <p>Use AI chat for follow-up questions grounded in the latest scan.</p>
+                </div>
+            </div>
+            <div class="cta-band">
+                <div>
+                    <h3 style="font-size:24px;">Ready to open the dedicated scanner?</h3>
+                    <p style="color:var(--muted);margin-top:6px;">No admin panel needed. Start from the public scan workspace.</p>
+                </div>
+                <a class="btn btn-primary" href="{{ url_for('scan_page') }}"><i class="fas fa-magnifying-glass-plus"></i> Start Scan Now</a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<a class="float-scan" href="{{ url_for('scan_page') }}" title="Start scan">
+    <i class="fas fa-wand-magic-sparkles"></i>
+</a>
+
+<footer class="footer">
+    <div class="footer-inner">
+        <span>SkinAI - AI-assisted skin screening, not a medical diagnosis.</span>
+        <span>For urgent symptoms, contact a qualified clinician.</span>
+    </div>
+</footer>
+</body>
+</html>

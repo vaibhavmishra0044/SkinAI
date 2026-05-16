@@ -816,9 +816,7 @@ def admin_required(f):
 # ── Auth Routes ───────────────────────────────────────────────────────────────
 @app.route('/')
 def home():
-    if current_user.is_authenticated:
-        return redirect(url_for('admin_dashboard') if current_user.is_admin else url_for('dashboard'))
-    return redirect(url_for('login'))
+    return render_template('index.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
