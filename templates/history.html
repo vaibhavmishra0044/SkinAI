@@ -1,119 +1,209 @@
 {% extends 'base.html' %}
 {% block title %}Scan History{% endblock %}
-{% block page_title %}My Scan History{% endblock %}
+{% block page_title %}Scan History{% endblock %}
 {% block topbar_actions %}
 <a href="{{ url_for('scan_page') }}" class="btn btn-primary btn-sm">
-    <i class="fas fa-magnifying-glass-plus"></i> New Scan
+    <i class="fas fa-camera"></i> New Screening
 </a>
 {% endblock %}
 
 {% block extra_css %}
 <style>
-.conf-bar-sm { width:60px; height:6px; background:var(--gray-100); border-radius:3px; overflow:hidden; display:inline-block; vertical-align:middle; margin-right:6px; }
-.conf-bar-sm-fill { height:100%; border-radius:3px; }
-.top3-pills { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
-.top3-pill {
-    font-size:11px; font-weight:600; padding:2px 8px;
-    background:var(--gray-100); color:var(--gray-500); border-radius:10px;
+.history-intro {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+    padding: 22px;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    background: linear-gradient(135deg, #ffffff, #ecfdf9);
+    box-shadow: var(--shadow);
 }
-.top3-pill.first { background:#e0f2fe; color:#0284c7; }
-.hist-row:hover td { background:var(--gray-50); }
-.hist-row { cursor:default; }
+.history-intro h2 {
+    color: var(--gray-900);
+    font-size: clamp(24px, 3vw, 34px);
+    font-weight: 900;
+}
+.history-intro p {
+    max-width: 720px;
+    margin-top: 6px;
+    color: var(--gray-600);
+    line-height: 1.6;
+    font-weight: 650;
+}
+.history-list {
+    display: grid;
+    gap: 12px;
+}
+.history-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
+    padding: 16px;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    background: #fff;
+}
+.history-main {
+    min-width: 0;
+}
+.history-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    color: var(--gray-900);
+    font-size: 16px;
+    font-weight: 900;
+}
+.history-meta {
+    margin-top: 6px;
+    color: var(--gray-500);
+    font-size: 13px;
+}
+.confidence-mini {
+    min-width: 150px;
+    text-align: right;
+}
+.confidence-mini strong {
+    color: var(--gray-900);
+    font-size: 20px;
+}
+.track {
+    height: 8px;
+    margin-top: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--gray-100);
+}
+.track span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+}
+.top3-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+}
+.top3-pill {
+    padding: 5px 8px;
+    border-radius: 999px;
+    color: var(--gray-600);
+    background: var(--gray-100);
+    font-size: 11px;
+    font-weight: 800;
+}
+.top3-pill.first {
+    color: var(--primary-dark);
+    background: var(--primary-light);
+}
+.disclaimer-card {
+    margin-top: 14px;
+    padding: 13px 15px;
+    border: 1px solid #fed7aa;
+    border-radius: 8px;
+    color: #7c3f00;
+    background: #fff7ed;
+    font-size: 13px;
+    line-height: 1.5;
+    font-weight: 650;
+}
+@media(max-width:760px) {
+    .history-intro,
+    .history-card {
+        grid-template-columns: 1fr;
+    }
+    .history-intro {
+        align-items: flex-start;
+    }
+    .confidence-mini {
+        text-align: left;
+        min-width: 0;
+    }
+}
 </style>
 {% endblock %}
 
 {% block content %}
+<section class="history-intro">
+    <div>
+        <h2>Your screening history</h2>
+        <p>
+            Review saved final results after symptom verification. Use these records as a discussion aid with a clinician,
+            not as a confirmed diagnosis.
+        </p>
+    </div>
+    <a href="{{ url_for('scan_page') }}" class="btn btn-primary">
+        <i class="fas fa-camera"></i> Start New Screening
+    </a>
+</section>
 
-<!-- Summary Stats -->
-<div class="stats-grid" style="margin-bottom:20px;">
+<div class="stats-grid">
     <div class="stat-card">
-        <div class="stat-icon" style="background:#e0f2fe;color:#0284c7;"><i class="fas fa-microscope"></i></div>
+        <div class="stat-icon" style="background:#dcfdf7;color:#0f766e;"><i class="fas fa-file-medical"></i></div>
         <div class="stat-value">{{ preds|length }}</div>
-        <div class="stat-label">Total Scans</div>
+        <div class="stat-label">Saved Results</div>
     </div>
     {% if preds %}
     <div class="stat-card">
-        <div class="stat-icon" style="background:#dcfce7;color:#16a34a;"><i class="fas fa-chart-line"></i></div>
+        <div class="stat-icon" style="background:#e0f2fe;color:#2563eb;"><i class="fas fa-chart-line"></i></div>
         <div class="stat-value">{{ (preds|map(attribute='confidence')|list|sum / preds|length)|round(1) }}%</div>
-        <div class="stat-label">Avg Confidence</div>
+        <div class="stat-label">Average Confidence</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon" style="background:#fef3c7;color:#d97706;"><i class="fas fa-calendar"></i></div>
-        <div class="stat-value" style="font-size:16px;">{{ preds[0].created_at.strftime('%b %d') }}</div>
-        <div class="stat-label">Latest Scan</div>
+        <div class="stat-icon" style="background:#fff7ed;color:#c2410c;"><i class="fas fa-calendar"></i></div>
+        <div class="stat-value" style="font-size:20px;">{{ preds[0].created_at.strftime('%b %d') }}</div>
+        <div class="stat-label">Latest Screening</div>
     </div>
     {% set high_risk = preds|selectattr('risk_level','in',['High','Very High'])|list %}
     <div class="stat-card">
-        <div class="stat-icon" style="background:#fee2e2;color:#dc2626;"><i class="fas fa-triangle-exclamation"></i></div>
+        <div class="stat-icon" style="background:#fff1f2;color:#be123c;"><i class="fas fa-triangle-exclamation"></i></div>
         <div class="stat-value">{{ high_risk|length }}</div>
         <div class="stat-label">High Risk Flags</div>
     </div>
     {% else %}
     <div class="stat-card">
-        <div class="stat-icon" style="background:#dcfce7;color:#16a34a;"><i class="fas fa-chart-line"></i></div>
-        <div class="stat-value">—</div>
-        <div class="stat-label">Avg Confidence</div>
+        <div class="stat-icon" style="background:#e0f2fe;color:#2563eb;"><i class="fas fa-chart-line"></i></div>
+        <div class="stat-value">--</div>
+        <div class="stat-label">Average Confidence</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon" style="background:#fef3c7;color:#d97706;"><i class="fas fa-calendar"></i></div>
-        <div class="stat-value">—</div>
-        <div class="stat-label">Latest Scan</div>
+        <div class="stat-icon" style="background:#fff7ed;color:#c2410c;"><i class="fas fa-calendar"></i></div>
+        <div class="stat-value">--</div>
+        <div class="stat-label">Latest Screening</div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon" style="background:#fee2e2;color:#dc2626;"><i class="fas fa-triangle-exclamation"></i></div>
+        <div class="stat-icon" style="background:#fff1f2;color:#be123c;"><i class="fas fa-triangle-exclamation"></i></div>
         <div class="stat-value">0</div>
         <div class="stat-label">High Risk Flags</div>
     </div>
     {% endif %}
 </div>
 
-<!-- History Table -->
-<div class="card">
+<section class="card">
     <div class="card-header">
-        <h3><i class="fas fa-clock-rotate-left" style="color:var(--primary);margin-right:8px;"></i> All Scan Records</h3>
-        {% if preds %}
-        <a href="{{ url_for('scan_page') }}" class="btn btn-ghost btn-sm">
-            <i class="fas fa-plus"></i> New Scan
-        </a>
-        {% endif %}
+        <h3><i class="fas fa-clock-rotate-left" style="color:var(--primary);margin-right:8px;"></i> Saved Final Results</h3>
     </div>
-
-    {% if preds %}
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Date &amp; Time</th>
-                    <th>Suspected Condition</th>
-                    <th>Confidence</th>
-                    <th>Risk Level</th>
-                    <th>Top Possible Matches</th>
-                </tr>
-            </thead>
-            <tbody>
+    <div class="card-body">
+        {% if preds %}
+        <div class="history-list">
             {% for p in preds %}
             {% set risk_classes = {'Low':'badge-low','Moderate':'badge-moderate','High':'badge-high','Very High':'badge-veryhigh'} %}
-            {% set conf_color = '#22c55e' if p.confidence >= 75 else ('#f59e0b' if p.confidence >= 50 else '#ef4444') %}
-            <tr class="hist-row">
-                <td style="color:var(--gray-400);font-size:12px;">{{ loop.index }}</td>
-                <td style="font-size:13px;white-space:nowrap;">
-                    <div style="font-weight:600;color:var(--gray-800);">{{ p.created_at.strftime('%b %d, %Y') }}</div>
-                    <div style="color:var(--gray-400);">{{ p.created_at.strftime('%H:%M') }}</div>
-                </td>
-                <td>
-                    <div style="font-weight:700;font-size:14px;color:var(--gray-900);">{{ p.predicted_class }}</div>
-                </td>
-                <td style="white-space:nowrap;">
-                    <div class="conf-bar-sm">
-                        <div class="conf-bar-sm-fill" style="width:{{ p.confidence|round(0)|int }}%;background:{{ conf_color }};"></div>
+            {% set conf_color = '#16a34a' if p.confidence >= 75 else ('#f59e0b' if p.confidence >= 50 else '#e11d48') %}
+            <article class="history-card">
+                <div class="history-main">
+                    <div class="history-title">
+                        <i class="fas fa-file-medical" style="color:var(--primary);"></i>
+                        <span>{{ p.predicted_class }}</span>
+                        <span class="badge {{ risk_classes.get(p.risk_level,'badge-user') }}">{{ p.risk_level }}</span>
                     </div>
-                    <span style="font-weight:700;font-size:13px;">{{ p.confidence|round(1) }}%</span>
-                </td>
-                <td>
-                    <span class="badge {{ risk_classes.get(p.risk_level,'badge-user') }}">{{ p.risk_level }}</span>
-                </td>
-                <td>
+                    <div class="history-meta">
+                        {{ p.created_at.strftime('%B %d, %Y at %H:%M') }}
+                    </div>
                     {% if p.top3_json %}
                     {% set top3 = p.top3_json | from_json %}
                     <div class="top3-pills">
@@ -123,35 +213,31 @@
                         </span>
                         {% endfor %}
                     </div>
-                    {% else %}
-                    <span style="color:var(--gray-400);font-size:12px;">—</span>
                     {% endif %}
-                </td>
-            </tr>
+                </div>
+                <div class="confidence-mini">
+                    <strong>{{ p.confidence|round(1) }}%</strong>
+                    <div class="history-meta">confidence</div>
+                    <div class="track"><span style="width:{{ p.confidence|round(0)|int }}%;background:{{ conf_color }};"></span></div>
+                </div>
+            </article>
             {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-    <div class="card-body">
+        </div>
+        {% else %}
         <div class="empty-state">
-            <i class="fas fa-microscope"></i>
-            <h4>No scans yet</h4>
-            <p>You haven't analyzed any skin images yet. Get started below!</p>
-            <a href="{{ url_for('scan_page') }}" class="btn btn-primary" style="display:inline-flex;gap:6px;align-items:center;margin-top:10px;">
-                <i class="fas fa-magnifying-glass-plus"></i> Analyze First Image
+            <i class="fas fa-camera"></i>
+            <h4>No saved results yet</h4>
+            <p>Complete a guided scan and symptom quiz to save your first final result.</p>
+            <a href="{{ url_for('scan_page') }}" class="btn btn-primary" style="margin-top:12px;">
+                <i class="fas fa-camera"></i> Analyze First Image
             </a>
         </div>
+        {% endif %}
     </div>
-    {% endif %}
-</div>
+</section>
 
-{% if preds %}
-<div style="margin-top:12px;padding:12px 16px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;font-size:13px;color:#075985;">
+<div class="disclaimer-card">
     <i class="fas fa-circle-info"></i>
-    <strong>Medical Disclaimer:</strong> These results are for educational purposes only. All suspected conditions should be confirmed by a qualified dermatologist.
-    <a href="{{ url_for('scan_page') }}" style="color:#0284c7;font-weight:600;"> Run new scan -></a>
+    <strong>Medical disclaimer:</strong> SkinAI results are educational screening support. Confirm diagnosis and treatment with a qualified dermatologist.
 </div>
-{% endif %}
-
 {% endblock %}

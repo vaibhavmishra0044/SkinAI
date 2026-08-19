@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,312 +7,302 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <style>
-        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family:'Inter',sans-serif; min-height:100vh;
-            display:flex; background:#0f172a;
+            min-height: 100vh;
+            font-family: 'Inter', system-ui, sans-serif;
+            color: #102930;
+            background: linear-gradient(180deg, #f8fcfc 0%, #eef8f7 52%, #f8fbff 100%);
+            display: grid;
+            place-items: center;
+            padding: 24px;
         }
-
-        /* Hero */
-        .hero {
-            flex:1; position:relative; overflow:hidden;
-            display:flex; flex-direction:column;
-            justify-content:center; align-items:center; padding:60px;
-            background: linear-gradient(135deg, #0284c7 0%, #6d28d9 55%, #0f172a 100%);
+        a { color: inherit; text-decoration: none; }
+        .auth-shell {
+            width: min(1040px, 100%);
+            display: grid;
+            grid-template-columns: minmax(0, .95fr) minmax(360px, .72fr);
+            overflow: hidden;
+            border: 1px solid #dbe9e7;
+            border-radius: 8px;
+            background: rgba(255,255,255,.92);
+            box-shadow: 0 24px 70px rgba(15,56,61,.12);
         }
-        .hero::before {
-            content:''; position:absolute; inset:0;
-            background-image: radial-gradient(circle at 20% 50%, rgba(14,165,233,.25) 0%, transparent 50%),
-                              radial-gradient(circle at 80% 20%, rgba(139,92,246,.2) 0%, transparent 45%);
+        .auth-info {
+            padding: clamp(28px, 5vw, 54px);
+            background: linear-gradient(135deg, #ecfdf9, #f4fbff);
+            border-right: 1px solid #dbe9e7;
         }
-        .hero-content { position:relative; z-index:1; color:white; max-width:380px; }
-        .hero-logo {
-            width:72px; height:72px; background:rgba(255,255,255,.15);
-            backdrop-filter:blur(10px); border-radius:20px;
-            display:flex; align-items:center; justify-content:center;
-            font-size:32px; margin-bottom:28px;
-            border:1px solid rgba(255,255,255,.2);
-            box-shadow:0 8px 32px rgba(0,0,0,.2);
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 36px;
         }
-        .hero h1 { font-size:36px; font-weight:900; letter-spacing:-1.2px; margin-bottom:12px; }
-        .hero-sub { font-size:16px; color:rgba(255,255,255,.7); line-height:1.65; }
-        .hero-stats {
-            display:flex; gap:32px; margin-top:40px;
-            padding-top:32px; border-top:1px solid rgba(255,255,255,.12);
+        .brand-icon {
+            width: 48px;
+            height: 48px;
+            display: grid;
+            place-items: center;
+            border-radius: 8px;
+            color: #fff;
+            background: linear-gradient(135deg, #16c7b1, #2563eb);
+            box-shadow: 0 14px 32px rgba(15,159,141,.18);
         }
-        .h-stat-value { font-size:24px; font-weight:800; }
-        .h-stat-label { font-size:12px; color:rgba(255,255,255,.55); margin-top:2px; }
-        .hero-features { margin-top:36px; display:flex; flex-direction:column; gap:14px; }
-        .h-feat {
-            display:flex; align-items:center; gap:12px;
-            font-size:14px; color:rgba(255,255,255,.8);
+        .brand strong {
+            display: block;
+            color: #071d24;
+            font-size: 24px;
+            font-weight: 900;
         }
-        .h-feat-icon {
-            width:34px; height:34px; border-radius:9px;
-            background:rgba(255,255,255,.12);
-            display:flex; align-items:center; justify-content:center;
-            font-size:14px; flex-shrink:0;
+        .brand .brand-sub {
+            color: #5e747b;
+            font-size: 12px;
+            font-weight: 800;
         }
-
-        /* Form Panel */
-        .form-panel {
-            width:460px; background:white;
-            display:flex; flex-direction:column; justify-content:center;
-            padding:56px 52px;
+        .auth-info h1 {
+            max-width: 560px;
+            color: #071d24;
+            font-size: clamp(34px, 5vw, 58px);
+            line-height: 1.04;
+            font-weight: 900;
         }
-        .fp-tag {
-            display:inline-flex; align-items:center; gap:6px;
-            background:#e0f2fe; color:#0284c7;
-            font-size:12px; font-weight:700; padding:5px 12px; border-radius:20px;
-            margin-bottom:20px;
+        .auth-info p {
+            max-width: 540px;
+            margin-top: 14px;
+            color: #425a63;
+            line-height: 1.7;
+            font-weight: 650;
         }
-        .fp-title { font-size:28px; font-weight:800; color:#0f172a; letter-spacing:-.5px; }
-        .fp-sub { font-size:15px; color:#64748b; margin-top:4px; margin-bottom:28px; }
-
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0,1fr));
+            gap: 12px;
+            margin-top: 28px;
+        }
+        .feature {
+            padding: 14px;
+            border: 1px solid #dbe9e7;
+            border-radius: 8px;
+            background: #fff;
+        }
+        .feature i {
+            color: #0f9f8d;
+            margin-bottom: 8px;
+        }
+        .feature strong {
+            display: block;
+            color: #273f47;
+            font-size: 13px;
+        }
+        .feature span {
+            display: block;
+            margin-top: 4px;
+            color: #5e747b;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+        .auth-card {
+            padding: clamp(28px, 4vw, 46px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: #fff;
+        }
+        .tag {
+            width: max-content;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 10px;
+            border-radius: 999px;
+            color: #0f766e;
+            background: #dcfdf7;
+            border: 1px solid #b8f3e8;
+            font-size: 12px;
+            font-weight: 900;
+        }
+        .auth-card h2 {
+            margin-top: 14px;
+            color: #071d24;
+            font-size: 30px;
+            font-weight: 900;
+        }
+        .auth-card > p {
+            margin-top: 6px;
+            margin-bottom: 24px;
+            color: #5e747b;
+            font-weight: 650;
+        }
         .flash {
-            display:flex; align-items:center; gap:9px;
-            padding:11px 14px; border-radius:9px;
-            font-size:13px; font-weight:500; margin-bottom:14px;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: 12px;
+            padding: 11px 13px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
         }
-        .flash-danger { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; }
-        .flash-success { background:#dcfce7; color:#166534; border:1px solid #bbf7d0; }
-        .flash-info { background:#e0f2fe; color:#075985; border:1px solid #bae6fd; }
-        .flash-warning { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
-
-        .fg { margin-bottom:18px; }
-        .fg label { display:block; font-size:13px; font-weight:600; color:#334155; margin-bottom:6px; }
-        .input-box { position:relative; }
-        .input-box .icon {
-            position:absolute; left:14px; top:50%; transform:translateY(-50%);
-            color:#94a3b8; font-size:15px; pointer-events:none;
+        .flash-danger { color: #991b1b; background: #fee2e2; border: 1px solid #fecaca; }
+        .flash-success { color: #166534; background: #dcfce7; border: 1px solid #bbf7d0; }
+        .flash-info { color: #075985; background: #e0f2fe; border: 1px solid #bae6fd; }
+        .flash-warning { color: #92400e; background: #fef3c7; border: 1px solid #fde68a; }
+        .field { margin-bottom: 16px; }
+        .field label {
+            display: block;
+            margin-bottom: 6px;
+            color: #273f47;
+            font-size: 13px;
+            font-weight: 800;
         }
-        .inp {
-            width:100%; padding:12px 14px 12px 42px;
-            border:1.5px solid #e2e8f0; border-radius:10px;
-            font-size:14px; font-family:inherit; color:#1e293b;
-            background:#f8fafc; transition:all .15s;
+        .input-box { position: relative; }
+        .input-box i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #829aa0;
         }
-        .inp:focus { outline:none; border-color:#0ea5e9; box-shadow:0 0 0 3px rgba(14,165,233,.12); background:white; }
-
-        .btn-submit {
-            width:100%; padding:14px; margin-top:6px;
-            background:linear-gradient(135deg, #0ea5e9, #0284c7);
-            color:white; border:none; border-radius:10px;
-            font-size:15px; font-weight:700; font-family:inherit;
-            cursor:pointer; transition:all .2s;
-            box-shadow:0 4px 14px rgba(14,165,233,.35);
-            position:relative; overflow:hidden;
+        .input {
+            width: 100%;
+            min-height: 48px;
+            padding: 12px 14px 12px 42px;
+            border: 1px solid #dbe9e7;
+            border-radius: 8px;
+            outline: none;
+            color: #102930;
+            background: #f8fcfc;
+            font: inherit;
+            font-weight: 650;
         }
-        .btn-submit:hover { transform:translateY(-2px); box-shadow:0 8px 22px rgba(14,165,233,.4); }
-        .btn-submit:active { transform:translateY(0); }
-        .btn-submit:disabled { opacity:.7; cursor:not-allowed; transform:none; }
-
-        /* Entrance animation */
-        .form-panel { animation: slideIn .35s ease; }
-        @keyframes slideIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
-
-        .fp-footer { text-align:center; margin-top:22px; font-size:14px; color:#64748b; }
-        .fp-footer a { color:#0284c7; text-decoration:none; font-weight:600; }
-        .fp-footer a:hover { text-decoration:underline; }
-
+        .input:focus {
+            border-color: #0f9f8d;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(15,159,141,.12);
+        }
+        .submit {
+            width: 100%;
+            min-height: 48px;
+            border: 0;
+            border-radius: 999px;
+            color: #fff;
+            background: linear-gradient(135deg, #16c7b1, #0f9f8d);
+            box-shadow: 0 14px 32px rgba(15,159,141,.20);
+            font: inherit;
+            font-weight: 900;
+            cursor: pointer;
+        }
+        .submit:disabled { opacity: .65; cursor: wait; }
+        .footer {
+            margin-top: 18px;
+            text-align: center;
+            color: #5e747b;
+            font-size: 14px;
+            font-weight: 650;
+        }
+        .footer a { color: #0f766e; font-weight: 900; }
         .demo-box {
-            margin-top:20px; padding:13px 16px;
-            background:#f0f9ff; border:1px solid #bae6fd; border-radius:9px;
-            font-size:13px; color:#075985; text-align:center;
+            margin-top: 18px;
+            padding: 12px;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            color: #075985;
+            background: #f0f9ff;
+            text-align: center;
+            font-size: 13px;
+            line-height: 1.55;
+            font-weight: 700;
         }
-        .demo-box strong { display:block; margin-bottom:5px; }
         .demo-box code {
-            background:#e0f2fe; padding:2px 8px; border-radius:5px;
-            font-weight:700; font-family:monospace; font-size:13px;
+            padding: 2px 7px;
+            border-radius: 6px;
+            background: #e0f2fe;
+            font-weight: 900;
         }
-
-        @media (max-width:900px) {
-            .hero { display:none; }
-            .form-panel { width:100%; max-width:100%; padding:40px 24px; }
+        .home-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 18px;
+            color: #0f766e;
+            font-size: 13px;
+            font-weight: 900;
         }
-
-        /* Product-style auth refresh */
-        body {
-            background:
-                linear-gradient(135deg, rgba(7,17,31,.96), rgba(10,38,42,.95)),
-                #07111f;
-        }
-        .hero {
-            align-items:flex-start;
-            background:
-                linear-gradient(135deg, rgba(7,17,31,.90), rgba(10,38,42,.76)),
-                url('/static/background.jpg');
-            background-size:cover;
-            background-position:center;
-        }
-        .hero::before {
-            background-image:
-                linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px),
-                linear-gradient(180deg, rgba(255,255,255,.05) 1px, transparent 1px);
-            background-size:46px 46px;
-        }
-        .hero-content { max-width:520px; }
-        .hero-logo {
-            width:64px; height:64px; border-radius:16px;
-            background:linear-gradient(135deg, #14b8a6, #f97316);
-            border:1px solid rgba(255,255,255,.24);
-        }
-        .hero h1 { font-size:clamp(38px, 5vw, 64px); letter-spacing:0; line-height:1; }
-        .hero-sub { font-size:16px; max-width:460px; }
-        .hero-stats {
-            gap:14px;
-            border-top:none;
-            padding-top:0;
-            margin-top:26px;
-            flex-wrap:wrap;
-        }
-        .hero-stats > div {
-            min-width:120px;
-            padding:13px 14px;
-            border-radius:8px;
-            background:rgba(255,255,255,.10);
-            border:1px solid rgba(255,255,255,.14);
-            backdrop-filter:blur(12px);
-        }
-        .hero-features { gap:10px; margin-top:22px; }
-        .h-feat {
-            padding:9px 10px;
-            border:1px solid rgba(255,255,255,.12);
-            background:rgba(255,255,255,.08);
-            border-radius:8px;
-        }
-        .h-feat-icon { border-radius:8px; color:#99f6e4; }
-        .auth-scan-card {
-            margin-top:22px;
-            width:min(100%, 430px);
-            border:1px solid rgba(255,255,255,.16);
-            background:rgba(255,255,255,.10);
-            border-radius:8px;
-            padding:14px;
-            backdrop-filter:blur(16px);
-        }
-        .auth-scan-top {
-            display:flex; align-items:center; justify-content:space-between;
-            color:rgba(255,255,255,.74);
-            font-size:12px; font-weight:800; margin-bottom:12px;
-        }
-        .auth-scan-bars { display:grid; gap:9px; }
-        .auth-scan-row { display:grid; grid-template-columns:92px 1fr 42px; gap:10px; align-items:center; font-size:12px; color:rgba(255,255,255,.70); font-weight:700; }
-        .auth-scan-track { height:8px; border-radius:999px; background:rgba(255,255,255,.14); overflow:hidden; }
-        .auth-scan-fill { height:100%; border-radius:inherit; background:linear-gradient(90deg, #5eead4, #fb923c); }
-        .form-panel {
-            width:480px;
-            background:rgba(248,250,252,.96);
-            border-left:1px solid rgba(255,255,255,.45);
-            box-shadow:-24px 0 80px rgba(7,17,31,.18);
-        }
-        .fp-tag {
-            background:#ccfbf1;
-            color:#115e59;
-            border:1px solid rgba(15,118,110,.16);
-        }
-        .fp-title { letter-spacing:0; }
-        .inp { border-radius:12px; }
-        .inp:focus { border-color:#14b8a6; box-shadow:0 0 0 4px rgba(20,184,166,.14); }
-        .btn-submit {
-            border-radius:999px;
-            background:linear-gradient(135deg, #14b8a6, #0f766e);
-            box-shadow:0 16px 34px rgba(15,118,110,.24);
-        }
-        .btn-submit:hover { box-shadow:0 20px 44px rgba(15,118,110,.30); }
-        .fp-footer a { color:#0f766e; }
-        .demo-box {
-            background:#ecfeff;
-            border-color:#99f6e4;
-            color:#115e59;
-            border-radius:8px;
-        }
-        @media (max-width:900px) {
-            .hero { display:none; }
-            .form-panel { width:100%; min-height:100vh; padding:40px 24px; }
+        @media(max-width:900px) {
+            body { padding: 12px; }
+            .auth-shell { grid-template-columns: 1fr; }
+            .auth-info { border-right: 0; border-bottom: 1px solid #dbe9e7; }
+            .feature-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-
-<div class="hero">
-    <div class="hero-content">
-        <div class="hero-logo"><i class="fas fa-microscope"></i></div>
-        <h1>SkinAI</h1>
-        <p class="hero-sub">AI-assisted skin image analysis with condition details, safety guidance, and next steps.</p>
-        <div class="hero-stats">
-            <div><div class="h-stat-value">AI</div><div class="h-stat-label">Vision Analysis</div></div>
-            <div><div class="h-stat-value">Info</div><div class="h-stat-label">Disease Details</div></div>
-            <div><div class="h-stat-value">Care</div><div class="h-stat-label">Next Steps</div></div>
-        </div>
-        <div class="hero-features">
-            <div class="h-feat"><div class="h-feat-icon"><i class="fas fa-upload"></i></div> Upload dermoscopic or skin photo</div>
-            <div class="h-feat"><div class="h-feat-icon"><i class="fas fa-brain"></i></div> AI-assisted skin image analysis</div>
-            <div class="h-feat"><div class="h-feat-icon"><i class="fas fa-file-medical"></i></div> Get detailed condition report</div>
-            <div class="h-feat"><div class="h-feat-icon"><i class="fas fa-user-md"></i></div> Connect with dermatologists</div>
-        </div>
-        <div class="auth-scan-card" aria-hidden="true">
-            <div class="auth-scan-top">
-                <span><i class="fas fa-wave-square"></i> Sample scan</span>
-                <span>30 sec</span>
+    <main class="auth-shell">
+        <section class="auth-info">
+            <a class="brand" href="{{ url_for('home') }}">
+                <span class="brand-icon"><i class="fas fa-microscope"></i></span>
+                <span><strong>SkinAI</strong><span class="brand-sub">AI skin screening workspace</span></span>
+            </a>
+            <h1>Sign in to continue your skin screening workspace.</h1>
+            <p>Save final results, review your history, and use AI Doctor Chat after each guided screening.</p>
+            <div class="feature-grid">
+                <div class="feature"><i class="fas fa-camera"></i><strong>Guided scan</strong><span>Image first, symptom quiz second.</span></div>
+                <div class="feature"><i class="fas fa-file-medical"></i><strong>Saved results</strong><span>Keep final reports in your history.</span></div>
+                <div class="feature"><i class="fas fa-comment-medical"></i><strong>Result-aware chat</strong><span>Ask about care, risks, and next steps.</span></div>
+                <div class="feature"><i class="fas fa-user-doctor"></i><strong>Clinician follow-up</strong><span>Use results as a discussion aid.</span></div>
             </div>
-            <div class="auth-scan-bars">
-                <div class="auth-scan-row"><span>Confidence</span><div class="auth-scan-track"><div class="auth-scan-fill" style="width:78%;"></div></div><span>78%</span></div>
-                <div class="auth-scan-row"><span>Risk flags</span><div class="auth-scan-track"><div class="auth-scan-fill" style="width:42%;"></div></div><span>Low</span></div>
-                <div class="auth-scan-row"><span>Top match</span><div class="auth-scan-track"><div class="auth-scan-fill" style="width:64%;"></div></div><span>3</span></div>
+        </section>
+
+        <section class="auth-card">
+            <span class="tag"><i class="fas fa-shield-halved"></i> Secure login</span>
+            <h2>Welcome back</h2>
+            <p>Enter your account details.</p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">
+                    <i class="fas {% if category == 'success' %}fa-circle-check{% elif category == 'danger' %}fa-circle-exclamation{% elif category == 'warning' %}fa-triangle-exclamation{% else %}fa-circle-info{% endif %}"></i>
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('login') }}" id="loginForm">
+                <div class="field">
+                    <label for="username">Username</label>
+                    <div class="input-box">
+                        <i class="fas fa-user"></i>
+                        <input class="input" id="username" type="text" name="username" placeholder="Enter username" required autofocus autocomplete="username">
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="password">Password</label>
+                    <div class="input-box">
+                        <i class="fas fa-lock"></i>
+                        <input class="input" id="password" type="password" name="password" placeholder="Enter password" required autocomplete="current-password">
+                    </div>
+                </div>
+                <button class="submit" type="submit" id="submitBtn"><i class="fas fa-right-to-bracket"></i> Sign In</button>
+            </form>
+
+            <p class="footer">No account yet? <a href="{{ url_for('register') }}">Create one</a></p>
+            <div class="demo-box">
+                <strong><i class="fas fa-circle-info"></i> Demo admin</strong><br>
+                Username <code>admin</code> / Password <code>admin</code>
             </div>
-        </div>
-    </div>
-</div>
+            <a class="home-link" href="{{ url_for('home') }}"><i class="fas fa-arrow-left"></i> Back to public screening</a>
+        </section>
+    </main>
 
-<div class="form-panel">
-    <div class="fp-tag"><i class="fas fa-shield-halved"></i> Secure Login</div>
-    <div class="fp-title">Welcome Back</div>
-    <div class="fp-sub">Sign in to access your SkinAI account</div>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-        <div class="flash flash-{{ category }}">
-            <i class="fas {% if category == 'success' %}fa-circle-check{% elif category == 'danger' %}fa-circle-exclamation{% elif category == 'warning' %}fa-triangle-exclamation{% else %}fa-circle-info{% endif %}"></i>
-            {{ message }}
-        </div>
-        {% endfor %}
-    {% endif %}
-    {% endwith %}
-
-    <form method="POST" action="{{ url_for('login') }}">
-        <div class="fg">
-            <label>Username</label>
-            <div class="input-box">
-                <span class="icon"><i class="fas fa-user"></i></span>
-                <input class="inp" type="text" name="username" placeholder="Enter your username" required autofocus autocomplete="username">
-            </div>
-        </div>
-        <div class="fg">
-            <label>Password</label>
-            <div class="input-box">
-                <span class="icon"><i class="fas fa-lock"></i></span>
-                <input class="inp" type="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
-            </div>
-        </div>
-        <button type="submit" class="btn-submit" id="submitBtn"><i class="fas fa-right-to-bracket"></i> Sign In</button>
-    </form>
-
-    <p class="fp-footer">Don't have an account? <a href="{{ url_for('register') }}">Create one</a></p>
-
-    <div class="demo-box">
-        <strong><i class="fas fa-circle-info"></i> Demo Credentials</strong>
-        Admin: <code>admin</code> / <code>admin</code>
-    </div>
-</div>
-
-<script>
-document.querySelector('form').addEventListener('submit', function() {
-    const btn = document.getElementById('submitBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Signing in...';
-});
-</script>
+    <script>
+    document.getElementById('loginForm').addEventListener('submit', () => {
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Signing in...';
+    });
+    </script>
 </body>
 </html>

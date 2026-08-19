@@ -401,6 +401,74 @@
             flex-wrap:wrap;
             margin-left:auto;
         }
+        .scan-source-grid {
+            display:grid;
+            grid-template-columns:repeat(2, minmax(0,1fr));
+            gap:14px;
+            margin-bottom:18px;
+        }
+        .scan-source-card {
+            display:grid;
+            grid-template-columns:56px minmax(0,1fr);
+            gap:14px;
+            align-items:center;
+            padding:18px;
+            border:1px solid var(--line);
+            border-radius:8px;
+            background:#fff;
+            box-shadow:0 12px 30px rgba(15,56,61,.07);
+        }
+        .scan-source-card.primary {
+            border-color:#a8ded7;
+            background:linear-gradient(135deg, #ffffff, #ecfdf9);
+        }
+        .source-icon {
+            width:56px;
+            height:56px;
+            display:grid;
+            place-items:center;
+            border-radius:8px;
+            color:white;
+            background:linear-gradient(135deg, var(--teal-2), var(--teal));
+            font-size:22px;
+            box-shadow:0 14px 30px rgba(15,159,141,.18);
+        }
+        .source-icon.camera {
+            background:linear-gradient(135deg, var(--blue), #0891b2);
+            box-shadow:0 14px 30px rgba(37,99,235,.16);
+        }
+        .source-title {
+            color:#12323a;
+            font-size:17px;
+            font-weight:900;
+        }
+        .source-copy {
+            margin-top:5px;
+            color:var(--muted);
+            font-size:13px;
+            line-height:1.45;
+            font-weight:700;
+        }
+        .source-action {
+            margin-top:12px;
+            min-height:40px;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            gap:8px;
+            padding:0 14px;
+            border:1px solid var(--line);
+            border-radius:999px;
+            color:#12323a;
+            background:#fff;
+            font-weight:900;
+            box-shadow:0 8px 20px rgba(15,56,61,.06);
+        }
+        .source-action.primary {
+            color:#fff;
+            border-color:transparent;
+            background:linear-gradient(135deg, var(--teal-2), var(--teal));
+        }
         .upload-layout {
             display:grid;
             grid-template-columns:minmax(0,1fr) 260px;
@@ -453,6 +521,108 @@
             font-weight:750;
         }
         #fileInput { display:none; }
+        .camera-panel {
+            display:none;
+            overflow:hidden;
+            border:1px solid var(--line);
+            border-radius:26px;
+            background:#071d24;
+            box-shadow:0 16px 42px rgba(15,56,61,.12);
+        }
+        .camera-panel.show { display:block; }
+        .camera-view {
+            position:relative;
+            background:#071d24;
+        }
+        .camera-view video {
+            width:100%;
+            max-height:460px;
+            aspect-ratio:1.45;
+            object-fit:cover;
+            display:block;
+            background:#071d24;
+        }
+        .camera-guide {
+            position:absolute;
+            inset:9%;
+            border:2px solid rgba(255,255,255,.72);
+            border-radius:18px;
+            box-shadow:0 0 0 999px rgba(7,29,36,.22);
+            pointer-events:none;
+        }
+        .camera-caption {
+            position:absolute;
+            left:14px;
+            right:14px;
+            bottom:14px;
+            padding:10px 12px;
+            border-radius:8px;
+            color:white;
+            background:rgba(7,29,36,.68);
+            backdrop-filter:blur(10px);
+            font-size:12px;
+            line-height:1.45;
+            font-weight:800;
+        }
+        .camera-actions {
+            display:grid;
+            grid-template-columns:minmax(112px,1fr) auto minmax(112px,1fr);
+            align-items:center;
+            gap:12px;
+            flex-wrap:wrap;
+            padding:14px;
+            background:linear-gradient(180deg, #ffffff, #f8fcfc);
+            border-top:1px solid var(--line);
+        }
+        .camera-actions .btn {
+            min-height:40px;
+        }
+        .camera-secondary {
+            justify-self:stretch;
+            box-shadow:none;
+        }
+        .capture-button {
+            min-width:190px;
+            min-height:64px;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            gap:12px;
+            border:0;
+            border-radius:999px;
+            color:white;
+            background:linear-gradient(135deg, #fb7185, #f97316);
+            box-shadow:0 18px 42px rgba(249,115,22,.24);
+            font:inherit;
+            font-weight:900;
+            cursor:pointer;
+            transition:transform .18s ease, box-shadow .18s ease, filter .18s ease;
+        }
+        .capture-button:hover {
+            transform:translateY(-2px);
+            box-shadow:0 22px 54px rgba(249,115,22,.30);
+            filter:saturate(1.05);
+        }
+        .capture-button:active {
+            transform:translateY(0);
+        }
+        .shutter-mark {
+            width:34px;
+            height:34px;
+            display:grid;
+            place-items:center;
+            border:3px solid rgba(255,255,255,.92);
+            border-radius:50%;
+            background:rgba(255,255,255,.12);
+            box-shadow:inset 0 0 0 2px rgba(255,255,255,.16);
+        }
+        .shutter-mark span {
+            width:16px;
+            height:16px;
+            display:block;
+            border-radius:50%;
+            background:white;
+        }
         .preview-card {
             display:none;
             overflow:hidden;
@@ -885,6 +1055,7 @@
                 padding:22px;
             }
             .step-panel { padding:20px; }
+            .scan-source-grid,
             .form-grid,
             .check-grid,
             .quiz-options,
@@ -912,12 +1083,137 @@
                 bottom:82px;
                 width:auto;
             }
+            .camera-actions {
+                grid-template-columns:1fr;
+            }
+            .capture-button,
+            .camera-secondary {
+                width:100%;
+                justify-self:stretch;
+            }
+            .capture-button {
+                min-width:0;
+                order:-1;
+            }
         }
         @media(prefers-reduced-motion: reduce) {
             html { scroll-behavior:auto; }
             *, *::before, *::after {
                 animation:none !important;
                 transition:none !important;
+            }
+        }
+
+        /* Final medical UX pass: quieter, less crowded, one workflow at a time. */
+        body {
+            background:
+                linear-gradient(180deg, #f8fcfc 0%, #eef8f7 48%, #f7fbff 100%);
+        }
+        .topbar {
+            grid-template-columns: auto minmax(320px, 520px) auto;
+            max-width: 1240px;
+            margin: 0 auto;
+            width: 100%;
+            border: 1px solid rgba(219,233,231,.78);
+            border-top: 0;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 14px 40px rgba(15,56,61,.08);
+        }
+        .brand-mark,
+        .wizard,
+        .wizard-head,
+        .upload-zone,
+        .camera-panel,
+        .preview-card,
+        .photo-tips,
+        .card,
+        .detail,
+        .mini-card,
+        .result-hero,
+        .alert,
+        .chat-popup,
+        .chat-head,
+        .quiz-question,
+        .quiz-option,
+        .input,
+        .textarea,
+        .check-card,
+        .prelim-summary {
+            border-radius: 8px;
+        }
+        .page {
+            width: min(1120px, 100%);
+            padding-top: 28px;
+        }
+        .scan-source-card,
+        .source-icon {
+            border-radius:8px;
+        }
+        .shell {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        .wizard {
+            min-height: 0;
+            max-width: 980px;
+            width: 100%;
+            margin: 0 auto;
+            box-shadow: 0 24px 70px rgba(15,56,61,.10);
+        }
+        .wizard-head {
+            padding: 24px;
+            background: linear-gradient(135deg, #ecfdf9, #f4fbff);
+        }
+        .wizard-title {
+            max-width: 720px;
+            font-size: clamp(27px, 3.6vw, 40px);
+        }
+        .wizard-copy {
+            max-width: 720px;
+            font-size: 14px;
+        }
+        .step-panel {
+            padding: 24px;
+        }
+        .upload-layout {
+            grid-template-columns: 1fr;
+        }
+        .upload-zone {
+            min-height: 330px;
+        }
+        .camera-guide {
+            border-radius: 8px;
+        }
+        .photo-tips {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            background: #f9fdfd;
+        }
+        .side-panel {
+            position: static;
+            top: auto;
+            max-width: 980px;
+            width: 100%;
+            margin: 0 auto;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .mini-card {
+            box-shadow: 0 10px 24px rgba(15,56,61,.06);
+        }
+        .result-name {
+            font-size: clamp(28px, 4.4vw, 46px);
+        }
+        .details-grid {
+            grid-template-columns: repeat(2, minmax(0,1fr));
+        }
+        @media(max-width:1020px) {
+            .topbar {
+                grid-template-columns: 1fr;
+                border-radius: 0;
+                max-width: none;
+            }
+            .photo-tips,
+            .side-panel {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -1012,16 +1308,50 @@
             </section>
 
             <section class="step-panel active" data-step-panel="upload">
+                <div class="scan-source-grid" aria-label="Choose scan input source">
+                    <article class="scan-source-card primary">
+                        <div class="source-icon"><i class="fas fa-image"></i></div>
+                        <div>
+                            <div class="source-title">Upload Image</div>
+                            <p class="source-copy">Choose a clear JPG, PNG, or WebP photo from your device.</p>
+                            <button class="source-action primary" type="button" id="uploadFileBtn"><i class="fas fa-folder-open"></i> Choose Image</button>
+                        </div>
+                    </article>
+                    <article class="scan-source-card">
+                        <div class="source-icon camera"><i class="fas fa-video"></i></div>
+                        <div>
+                            <div class="source-title">Live Camera</div>
+                            <p class="source-copy">Open your device camera and capture a focused skin photo.</p>
+                            <button class="source-action" type="button" id="openCameraBtn"><i class="fas fa-camera"></i> Open Camera</button>
+                        </div>
+                    </article>
+                </div>
                 <div class="upload-layout">
                     <div>
                         <div class="upload-zone" id="uploadZone">
                             <div>
                                 <i class="fas fa-cloud-arrow-up"></i>
-                                <strong>Upload or capture skin image</strong>
-                                <span>Use a close, bright, focused photo of one affected skin area.</span>
-                                <span>JPG, PNG or WebP, max 10 MB.</span>
+                                <strong>Drop image here</strong>
+                                <span>Or click this card to choose a file.</span>
+                                <span>Use one close, bright, focused affected skin area.</span>
                             </div>
                             <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp">
+                        </div>
+                        <div class="camera-panel" id="cameraPanel">
+                            <div class="camera-view">
+                                <video id="cameraVideo" autoplay playsinline muted></video>
+                                <div class="camera-guide" aria-hidden="true"></div>
+                                <div class="camera-caption">Place the affected skin area inside the guide. Use good light and hold steady before capture.</div>
+                            </div>
+                            <canvas id="cameraCanvas" hidden></canvas>
+                            <div class="camera-actions">
+                                <button class="btn btn-ghost camera-secondary" type="button" id="closeCameraBtn"><i class="fas fa-xmark"></i> Close Camera</button>
+                                <button class="capture-button" type="button" id="capturePhotoBtn">
+                                    <span class="shutter-mark" aria-hidden="true"><span></span></span>
+                                    <strong>Capture Photo</strong>
+                                </button>
+                                <button class="btn camera-secondary" type="button" id="switchCameraBtn"><i class="fas fa-camera-rotate"></i> Switch Camera</button>
+                            </div>
                         </div>
                         <div class="preview-card" id="previewCard">
                             <img id="previewImg" alt="Uploaded skin preview">
@@ -1162,6 +1492,8 @@ let generatedQuiz = null;
 let lastAnalysis = null;
 let lastPatientContext = {};
 let chatUnlocked = false;
+let cameraStream = null;
+let cameraFacingMode = 'environment';
 const chatHistory = [];
 
 const wizardTitle = document.getElementById('wizardTitle');
@@ -1185,7 +1517,15 @@ const prelimSummary = document.getElementById('prelimSummary');
 const prelimSummaryText = document.getElementById('prelimSummaryText');
 const quizQuestions = document.getElementById('quizQuestions');
 const uploadZone = document.getElementById('uploadZone');
+const uploadFileBtn = document.getElementById('uploadFileBtn');
+const openCameraBtn = document.getElementById('openCameraBtn');
 const fileInput = document.getElementById('fileInput');
+const cameraPanel = document.getElementById('cameraPanel');
+const cameraVideo = document.getElementById('cameraVideo');
+const cameraCanvas = document.getElementById('cameraCanvas');
+const closeCameraBtn = document.getElementById('closeCameraBtn');
+const switchCameraBtn = document.getElementById('switchCameraBtn');
+const capturePhotoBtn = document.getElementById('capturePhotoBtn');
 const previewCard = document.getElementById('previewCard');
 const previewImg = document.getElementById('previewImg');
 const fileInfo = document.getElementById('fileInfo');
@@ -1369,6 +1709,24 @@ async function getOptimizedUploadFile() {
     return optimizedUploadFile;
 }
 
+function clearAnalysisStateAfterImageChange() {
+    optimizedUploadFile = null;
+    preliminaryAnalysis = null;
+    generatedQuiz = null;
+    quizQuestions.innerHTML = '';
+    prelimSummary.classList.remove('show');
+}
+
+function showSelectedImage(file, dataUrl) {
+    selectedFile = file;
+    clearAnalysisStateAfterImageChange();
+    previewImg.src = dataUrl;
+    fileInfo.textContent = `${file.name} - ${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+    uploadZone.style.display = 'none';
+    cameraPanel.classList.remove('show');
+    previewCard.style.display = 'block';
+}
+
 function handleFile() {
     const file = fileInput.files[0];
     if (!file) return;
@@ -1385,23 +1743,104 @@ function handleFile() {
         selectedFile = null;
         return;
     }
-    selectedFile = file;
-    optimizedUploadFile = null;
-    preliminaryAnalysis = null;
-    generatedQuiz = null;
-    quizQuestions.innerHTML = '';
-    prelimSummary.classList.remove('show');
+    stopCamera();
     const reader = new FileReader();
     reader.onload = event => {
-        previewImg.src = event.target.result;
-        fileInfo.textContent = `${file.name} - ${(file.size / (1024 * 1024)).toFixed(2)} MB`;
-        uploadZone.style.display = 'none';
-        previewCard.style.display = 'block';
+        showSelectedImage(file, event.target.result);
     };
     reader.readAsDataURL(file);
 }
 
+function stopCamera() {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+    cameraVideo.srcObject = null;
+    cameraPanel.classList.remove('show');
+}
+
+async function startCamera(event) {
+    if (event) event.stopPropagation();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert('Camera access is not supported in this browser. Please upload a photo instead.');
+        return;
+    }
+    stopCamera();
+    previewCard.style.display = 'none';
+    uploadZone.style.display = 'none';
+    cameraPanel.classList.add('show');
+    try {
+        const constraints = {
+            video: {
+                facingMode: { ideal: cameraFacingMode },
+                width: { ideal: 1280 },
+                height: { ideal: 960 },
+            },
+            audio: false,
+        };
+        cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+    } catch (error) {
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        } catch (fallbackError) {
+            cameraPanel.classList.remove('show');
+            uploadZone.style.display = 'grid';
+            alert('Could not open the camera. Please allow camera permission or upload a photo.');
+            return;
+        }
+    }
+    cameraVideo.srcObject = cameraStream;
+    try {
+        await cameraVideo.play();
+    } catch (error) {
+        // Some browsers start playback automatically after permission.
+    }
+}
+
+async function switchCamera(event) {
+    if (event) event.stopPropagation();
+    cameraFacingMode = cameraFacingMode === 'environment' ? 'user' : 'environment';
+    await startCamera();
+}
+
+async function capturePhoto(event) {
+    if (event) event.stopPropagation();
+    if (!cameraStream || !cameraVideo.videoWidth || !cameraVideo.videoHeight) {
+        alert('Camera is still starting. Please wait a second and try again.');
+        return;
+    }
+    cameraCanvas.width = cameraVideo.videoWidth;
+    cameraCanvas.height = cameraVideo.videoHeight;
+    const ctx = cameraCanvas.getContext('2d', { alpha:false });
+    ctx.drawImage(cameraVideo, 0, 0, cameraCanvas.width, cameraCanvas.height);
+    const blob = await new Promise(resolve => cameraCanvas.toBlob(resolve, 'image/jpeg', 0.9));
+    if (!blob) {
+        alert('Could not capture a photo. Please try again.');
+        return;
+    }
+    const file = new File([blob], `skinai-camera-${Date.now()}.jpg`, {
+        type: 'image/jpeg',
+        lastModified: Date.now(),
+    });
+    const dataUrl = cameraCanvas.toDataURL('image/jpeg', 0.9);
+    stopCamera();
+    fileInput.value = '';
+    showSelectedImage(file, dataUrl);
+}
+
+function closeCamera(event) {
+    if (event) event.stopPropagation();
+    stopCamera();
+    if (!selectedFile) {
+        uploadZone.style.display = 'grid';
+    } else {
+        previewCard.style.display = 'block';
+    }
+}
+
 function resetImage() {
+    stopCamera();
     selectedFile = null;
     optimizedUploadFile = null;
     preliminaryAnalysis = null;
@@ -1614,6 +2053,7 @@ async function scanAndBuildQuiz() {
         alert('Please upload or capture a skin image first.');
         return;
     }
+    stopCamera();
     imageNextBtn.disabled = true;
     loadingTitle.textContent = 'Scanning image first';
     loadingCopy.textContent = 'SkinAI is detecting a preliminary skin condition from the photo, then generating a symptom quiz to verify it.';
@@ -1711,6 +2151,14 @@ imageNextBtn.addEventListener('click', () => {
 });
 clearSymptomsBtn.addEventListener('click', clearSymptoms);
 uploadZone.addEventListener('click', () => fileInput.click());
+uploadFileBtn.addEventListener('click', event => {
+    event.stopPropagation();
+    fileInput.click();
+});
+openCameraBtn.addEventListener('click', startCamera);
+closeCameraBtn.addEventListener('click', closeCamera);
+switchCameraBtn.addEventListener('click', switchCamera);
+capturePhotoBtn.addEventListener('click', capturePhoto);
 changePhotoBtn.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', handleFile);
 resetImageBtn.addEventListener('click', resetImage);

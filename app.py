@@ -970,7 +970,7 @@ def detect_page():
 
 @app.route('/scan')
 def scan_page():
-    return render_template('scan_window.html')
+    return render_template('index.html')
 
 @app.route('/generate-quiz', methods=['POST'])
 def generate_quiz():

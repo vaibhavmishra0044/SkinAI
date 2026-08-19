@@ -6,10 +6,10 @@ This project is not a medical diagnostic device. Results are educational screeni
 
 ## Current Analysis Flow
 
-1. User uploads a JPG, PNG, or WebP skin image.
+1. User uploads a JPG, PNG, or WebP skin image, or captures one with the device camera.
 2. The app rejects images that are too small, too wide, unclear, or not focused on an affected skin area.
 3. If `NVIDIA_API_KEY` is configured, the app uses AI vision analysis as the primary analyzer.
-4. The AI is not restricted to the old local 7-class CNN list. It can return a broad suspected dermatology condition name when the image supports it.
+4. The AI vision workflow can return a broad suspected dermatology condition name when the image supports it.
 5. If the AI is uncertain, the app marks the result as low confidence and shows safer next steps instead of forcing a disease name.
 6. If the API is unavailable, the app falls back to the limited local model and labels that result as a fallback.
 

@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}SkinAI{% endblock %} &mdash; Skin Disease Detection</title>
+    <title>{% block title %}SkinAI{% endblock %} &mdash; AI Skin Screening</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -647,6 +647,176 @@
             .content { padding: 18px 16px 30px; }
         }
 
+        /* Final unified medical workspace polish */
+        :root {
+            --primary: #0f9f8d;
+            --primary-dark: #0f766e;
+            --primary-light: #dcfdf7;
+            --accent: #2563eb;
+            --accent-light: #e0f2fe;
+            --coral: #fb7185;
+            --lime: #84cc16;
+            --gray-50: #f8fcfc;
+            --gray-100: #eef8f7;
+            --gray-200: #dbe9e7;
+            --gray-300: #bdd3d0;
+            --gray-400: #829aa0;
+            --gray-500: #5e747b;
+            --gray-600: #425a63;
+            --gray-700: #273f47;
+            --gray-800: #102930;
+            --gray-900: #071d24;
+            --radius: 8px;
+            --shadow: 0 12px 34px rgba(15, 56, 61, .07);
+            --shadow-md: 0 18px 48px rgba(15, 56, 61, .10);
+            --shadow-lg: 0 26px 70px rgba(15, 56, 61, .14);
+        }
+        body {
+            background: linear-gradient(180deg, #f9fdfd 0%, #eef8f7 54%, #f8fbff 100%);
+            color: var(--gray-800);
+        }
+        .sidebar {
+            width: 264px;
+            background: rgba(255,255,255,.94);
+            border-right: 1px solid var(--gray-200);
+            box-shadow: 18px 0 50px rgba(15, 56, 61, .07);
+            backdrop-filter: blur(18px);
+        }
+        .sidebar-brand {
+            border-bottom: 1px solid var(--gray-200);
+        }
+        .brand-icon,
+        .user-avatar {
+            border-radius: 8px;
+            background: linear-gradient(135deg, #16c7b1, #2563eb);
+            box-shadow: 0 12px 28px rgba(15,159,141,.18);
+        }
+        .brand-text {
+            color: var(--gray-900);
+        }
+        .brand-sub,
+        .nav-section-label,
+        .user-role {
+            color: var(--gray-500);
+        }
+        .nav-link {
+            color: var(--gray-600);
+            border-radius: 8px;
+            border: 1px solid transparent;
+        }
+        .nav-link:hover {
+            background: var(--gray-100);
+            color: var(--primary-dark);
+            border-color: var(--gray-200);
+        }
+        .nav-link.active {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            border-color: #b8f3e8;
+            box-shadow: none;
+        }
+        .sidebar-footer {
+            border-top: 1px solid var(--gray-200);
+        }
+        .user-card {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+        }
+        .user-name {
+            color: var(--gray-900);
+        }
+        .main {
+            margin-left: 264px;
+        }
+        .topbar {
+            height: 70px;
+            background: rgba(255,255,255,.86);
+            border-bottom: 1px solid var(--gray-200);
+            box-shadow: none;
+        }
+        .topbar-title {
+            color: var(--gray-900);
+            font-size: 21px;
+        }
+        .content {
+            width: min(100%, 1320px);
+            padding-top: 26px;
+        }
+        .card,
+        .stat-card,
+        .doctor-card,
+        .modal,
+        .tabs,
+        .form-input,
+        .inp,
+        .btn,
+        .flash {
+            border-radius: 8px;
+        }
+        .card,
+        .stat-card,
+        .doctor-card {
+            background: rgba(255,255,255,.92);
+            border: 1px solid var(--gray-200);
+            box-shadow: var(--shadow);
+        }
+        .card:hover,
+        .doctor-card:hover,
+        .stat-card:hover {
+            transform: none;
+            box-shadow: var(--shadow-md);
+        }
+        .card-header {
+            background: linear-gradient(135deg, #ffffff, #f5fbfa);
+            border-bottom: 1px solid var(--gray-200);
+        }
+        .btn {
+            min-height: 40px;
+            font-weight: 750;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #16c7b1, #0f9f8d);
+            box-shadow: 0 12px 26px rgba(15,159,141,.18);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0f9f8d, #0f766e);
+            box-shadow: 0 16px 32px rgba(15,159,141,.22);
+        }
+        .btn-accent {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+        .btn-outline {
+            background: #fff;
+            border-color: var(--gray-200);
+        }
+        .stat-card {
+            min-height: 126px;
+        }
+        .stat-card::before {
+            display: none;
+        }
+        .stat-icon,
+        .doctor-avatar-lg {
+            border-radius: 8px;
+        }
+        th {
+            background: #f6fbfb;
+        }
+        tbody tr:hover td {
+            background: #f2fbf9;
+        }
+        .badge {
+            border-radius: 999px;
+        }
+        .empty-state {
+            color: var(--gray-500);
+        }
+        @media (max-width: 900px) {
+            .sidebar { width: 280px; }
+            .main { margin-left: 0; }
+        }
+
     </style>
 {% block extra_css %}{% endblock %}
 </head>
@@ -684,7 +854,7 @@
         {% endif %}
 
         <div class="nav-section-label" style="margin-top: 4px;">Resources</div>
-        <a href="https://www.aad.org/public/diseases/skin-conditions" target="_blank" class="nav-link">
+        <a href="https://www.aad.org/public/diseases/a-z" target="_blank" class="nav-link">
             <i class="fas fa-book-medical"></i> Skin Conditions Guide
         </a>
         <a href="https://www.google.com/maps/search/dermatologist+near+me" target="_blank" class="nav-link">
