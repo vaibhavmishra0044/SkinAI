@@ -1,8 +1,21 @@
-# SkinAI - AI Skin Condition Analysis
+# SkinAI | AI-Assisted Skin Image Analysis
+
+**Computer vision • Deep learning • Flask web application**
 
 SkinAI is a Flask web app for AI-assisted skin image analysis. It accepts a clear close-up skin photo, checks whether a visible lesion or rash is present, then returns a suspected condition, top alternative matches, visible signs, safety guidance, and next steps.
 
 This project is not a medical diagnostic device. Results are educational screening support only and should be confirmed by a qualified dermatologist.
+
+## Project overview
+
+SkinAI explores how computer vision and web application development can support educational skin-image screening. The design prioritizes image quality checks, uncertainty handling and a limited local fallback when the primary AI service is unavailable.
+
+| Component | Technology |
+| --- | --- |
+| Web application | Python, Flask |
+| Primary analysis | NVIDIA vision-language model API |
+| Local fallback | Keras / TensorFlow Lite |
+| Deployment configuration | Vercel |
 
 ## Current Analysis Flow
 
@@ -90,3 +103,14 @@ Then run:
 ```bash
 python train.py
 ```
+
+## Limitations and responsible use
+
+- Image-based predictions cannot replace a clinical examination.
+- The primary API and local fallback have different capabilities; their performance should be evaluated separately.
+- Do not upload identifiable patient images without appropriate consent and privacy safeguards.
+- Clinical validation is required before any medical use.
+
+## Author
+
+[Vaibhav Mishra](https://github.com/vaibhavmishra0044) | [LinkedIn](https://linkedin.com/in/vaibhav-mishra04)
